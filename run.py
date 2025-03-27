@@ -1,7 +1,10 @@
+import sys
+from typing import Optional
+
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
 with Progress(
-    SpinnerColumn(),
+    SpinnerColumn("dots", style="yellow", speed=0.8),
     TextColumn("[progress.description]{task.description}"),
 ) as progress:
     progress.add_task("[yellow]Initializing Kokoro...[/]", total=None)
@@ -19,33 +22,61 @@ from utils import (
 )
 
 
-def start(language: str, voice: str, speed: float, history_off: bool, device: str) -> None:
+def start(
+    language: str,
+    voice: str,
+    speed: float,
+    history_off: bool,
+    device: str,
+    input_text: Optional[str],
+    output_file: Optional[str],
+) -> None:
     """Initialize and run"""
     try:
-        # Initialize TTS pipeline
         with Progress(
-            SpinnerColumn(),
+            SpinnerColumn("dots", style="yellow", speed=0.8),
             TextColumn("[progress.description]{task.description}"),
         ) as progress:
-            progress.add_task(
-                "[yellow]Initializing Kokoro pipeline...[/]", total=None
-            )
+            progress.add_task("[yellow]Initializing Kokoro pipeline...[/]", total=None)
+            # Initialize TTS pipeline
             pipeline = KPipeline(lang_code=language, repo_id=REPO_ID, device=device)
 
-        # Display starting configuration
-        console.print("[green]Starting with:[/]")
-        console.print(f"  Language: [cyan]{get_language_map()[language]}[/]")
-        console.print(f"  Voice: [cyan]{voice}[/]")
-        console.print(f"  Speed: [cyan]{speed}[/]")
-
-        # Run interactive mode
-        run_interactive(pipeline, language, voice, speed, history_off, device, PROMPT)
+        # Run
+        if input_text:
+            run_noninteractive(
+                pipeline, language, voice, speed, input_text, output_file
+            )
+        else:
+            run_interactive(
+                pipeline, language, voice, speed, history_off, device, PROMPT
+            )
     except KeyboardInterrupt:
-        console.print("\n[bold yellow]Program terminated by user.[/]")
+        console.print("\n[bold yellow]Terminated[/]")
     except EOFError:
         console.print("\n")
     except Exception as e:
         console.print(f"[bold red]Error:[/] {str(e)}")
+
+
+def run_noninteractive(
+    pipeline: KPipeline,
+    language: str,
+    voice: str,
+    speed: float,
+    input_text: str,
+    output_file: Optional[str],
+) -> None:
+    """Generate audio"""
+    player = TTSPlayer(pipeline, language, voice, speed)
+    if output_file is None:
+        console.print(f"[cyan]Speaking:[/] {input_text}")
+        try:
+            player.speak(input_text, interactive=False)
+        except KeyboardInterrupt:
+            console.print("[bold yellow]Exiting...[/]")
+            sys.exit()
+    else:
+        player.generate_audio_file(input_text, output_file=output_file)
 
 
 def run_interactive(
@@ -58,6 +89,13 @@ def run_interactive(
     prompt="> ",
 ) -> None:
     """Run an interactive TTS session with dynamic settings."""
+
+    # Display starting configuration
+    console.print("[green]Starting with:[/]")
+    console.print(f"  Language: [cyan]{get_language_map()[language]}[/]")
+    console.print(f"  Voice: [cyan]{voice}[/]")
+    console.print(f"  Speed: [cyan]{speed}[/]")
+
     player = TTSPlayer(pipeline, language, voice, speed)
 
     console.print("[bold green]Interactive TTS started.[/]")
@@ -130,7 +168,6 @@ def run_interactive(
 
                 continue
 
-            # Process text for TTS
             console.print(f"[cyan]Speaking:[/] {user_input}")
             player.speak(user_input)
 

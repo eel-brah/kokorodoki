@@ -1,9 +1,19 @@
 import queue
 import threading
 import time
+import sys
 
 import sounddevice as sd
+import soundfile as sf
+import torch
 from kokoro import KPipeline
+from rich.progress import (
+    BarColumn,
+    Progress,
+    SpinnerColumn,
+    TextColumn,
+    TimeElapsedColumn,
+)
 
 from config import MAX_SPEED, MIN_SPEED, REPO_ID, SAMPLE_RATE, console
 from utils import get_language_map, get_voices
@@ -26,7 +36,9 @@ class TTSPlayer:
         """Change the language and reinitialize the pipeline."""
         if new_lang in self.languages:
             self.language = new_lang
-            self.pipeline = KPipeline(lang_code=self.language, repo_id=REPO_ID, device=device)
+            self.pipeline = KPipeline(
+                lang_code=self.language, repo_id=REPO_ID, device=device
+            )
             return True
         return False
 
@@ -65,6 +77,48 @@ class TTSPlayer:
             console.print(f"[bold red]Generation error:[/] {str(e)}")
             self.audio_queue.put(None)  # Ensure playback thread exits
 
+    def generate_audio_file(self, text: str, output_file="Output.wav") -> None:
+        """Generate audio file"""
+        try:
+            with Progress(
+                SpinnerColumn("dots", style="yellow", speed=0.8),
+                TextColumn("[bold yellow]{task.description}"),
+                BarColumn(pulse_style="yellow", complete_style="blue"),
+                TimeElapsedColumn(),
+            ) as progress:
+
+                task = progress.add_task(
+                    f"[bold yellow]Generating {output_file}",
+                    total=None,
+                )
+
+                generator = self.pipeline(
+                    text, voice=self.voice, speed=self.speed, split_pattern=None
+                )
+
+                audio_chunks = []
+                for result in generator:
+                    audio_chunks.append(result.audio)
+
+                # Concatenate all audio chunks
+                full_audio = torch.cat(audio_chunks, dim=0)
+
+                # Save the combined audio
+                sf.write(output_file, full_audio, SAMPLE_RATE)
+
+                progress.update(
+                    task,
+                    completed=1,
+                    total=1,
+                    description=f"[bold green]Saved to {output_file}[/]",
+                )
+
+        except KeyboardInterrupt:
+            console.print("\n[bold yellow]Exiting...[/]")
+            sys.exit()
+        except Exception as e:
+            console.print(f"[bold red]Generation error:[/] {str(e)}")
+
     def play_audio(self) -> None:
         """Play audio chunks from the queue."""
         try:
@@ -92,41 +146,40 @@ class TTSPlayer:
         """Stop ongoing generation and playback."""
         self.stop_event.set()
 
-        # Clear the queue
-        while True:
-            try:
-                self.audio_queue.get_nowait()
-                self.audio_queue.task_done()
-            except Exception:
-                break
+        with self.audio_queue.mutex:
+            self.audio_queue.queue.clear()
+
         if printm:
             console.print("\n[yellow]Playback stopped.[/]\n")
 
-    def speak(self, text: str) -> None:
+    def speak(self, text: str, interactive=True) -> None:
         """Start TTS generation and playback in separate threads."""
+        self.stop_event.clear()
+
+        # Make sure the queue is empty
+        with self.audio_queue.mutex:
+            self.audio_queue.queue.clear()
+
+        gen_thread = threading.Thread(
+            target=self.generate_audio, args=(text,), daemon=True
+        )
+        play_thread = threading.Thread(target=self.play_audio, daemon=True)
+
         try:
-            self.stop_event.clear()
-
-            # Empty the queue if there's anything left
-            try:
-                while True:
-                    self.audio_queue.get_nowait()
-                    self.audio_queue.task_done()
-            except queue.Empty:
-                pass
-
             # Start generation thread
-            gen_thread = threading.Thread(
-                target=self.generate_audio, args=(text,), daemon=True
-            )
             gen_thread.start()
 
             # Start playback thread
-            play_thread = threading.Thread(target=self.play_audio, daemon=True)
             play_thread.start()
 
             # Wait for playback to complete
             play_thread.join()
         except KeyboardInterrupt:
-            self.stop_playback()
-            console.print("\n[bold yellow]Interrupted. Type !q to exit.[/]")
+            self.stop_playback(False)
+            if interactive:
+                console.print("\n[bold yellow]Interrupted. Type !q to exit.[/]")
+            else:
+                console.print("\n[bold yellow]Exiting...[/]")
+            gen_thread.join()
+            play_thread.join()
+            sys.exit()

@@ -1,6 +1,6 @@
 import argparse
 import sys
-from typing import Tuple
+from typing import Optional, Tuple
 
 from config import (
     DEFAULT_LANGUAGE,
@@ -19,11 +19,12 @@ from utils import (
 )
 
 
-def parse_args() -> Tuple[str, str, float, bool, str]:
+def parse_args() -> Tuple[str, str, float, bool, str, Optional[str], Optional[str]]:
     """Parse command-line arguments for language, voice, and speed."""
     parser = argparse.ArgumentParser(
         description="Real-time TTS with Kokoro-82M. Use !commands to adjust settings."
     )
+
     parser.add_argument(
         "--language",
         "-l",
@@ -68,7 +69,29 @@ def parse_args() -> Tuple[str, str, float, bool, str]:
             "Set the device for computation ('cuda' for GPU or 'cpu'). "
             "Default: Auto-selects 'cuda' if available, otherwise falls back to 'cpu'. "
             "If 'cuda' is specified but unavailable, raises an error."
-        )
+        ),
+    )
+    input_group = parser.add_mutually_exclusive_group()
+    input_group.add_argument(
+        "--text",
+        "-t",
+        default=None,
+        type=str,
+        help="Supply text",
+    )
+    input_group.add_argument(
+        "--file",
+        "-f",
+        default=None,
+        type=str,
+        help="Supply path to a text file",
+    )
+    parser.add_argument(
+        "--output",
+        "-o",
+        type=str,
+        default=None,
+        help="Output file path (only valid when --text or --file is used)",
     )
 
     args = parser.parse_args()
@@ -102,7 +125,36 @@ def parse_args() -> Tuple[str, str, float, bool, str]:
         )
         sys.exit(1)
 
-    return args.language, args.voice, args.speed, args.history_off, args.device
+    # Validate that output isn't used without input
+    if args.output is not None and args.text is None and args.file is None:
+        parser.error("--output can only be used with --text or --file")
+
+    # Handle input text/file
+    input_text = None
+    if args.file is not None:
+        if not args.file.strip():
+            console.print("[bold red]Error:[/] File path cannot be empty")
+            sys.exit(1)
+        try:
+            with open(args.file, "r", encoding="utf-8") as f:
+                input_text = f.read()
+        except Exception as e:
+            console.print(f"[bold red]Error reading file:[/] {e}")
+            sys.exit(1)
+    elif args.text is not None:
+        if not args.text.strip():
+            console.print("[bold red]Error:[/] Text cannot be empty")
+            sys.exit(1)
+        input_text = args.text
+    return (
+        args.language,
+        args.voice,
+        args.speed,
+        args.history_off,
+        args.device,
+        input_text,
+        args.output,
+    )
 
 
 def get_input(history_off: bool, prompt="> ") -> str:
