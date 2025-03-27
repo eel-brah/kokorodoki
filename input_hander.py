@@ -19,7 +19,7 @@ from utils import (
 )
 
 
-def parse_args() -> Tuple[str, str, float, bool]:
+def parse_args() -> Tuple[str, str, float, bool, str]:
     """Parse command-line arguments for language, voice, and speed."""
     parser = argparse.ArgumentParser(
         description="Real-time TTS with Kokoro-82M. Use !commands to adjust settings."
@@ -60,6 +60,16 @@ def parse_args() -> Tuple[str, str, float, bool]:
         action="store_true",
         help="Disable the saving of history",
     )
+    parser.add_argument(
+        "--device",
+        type=str,
+        default=None,
+        help=(
+            "Set the device for computation ('cuda' for GPU or 'cpu'). "
+            "Default: Auto-selects 'cuda' if available, otherwise falls back to 'cpu'. "
+            "If 'cuda' is specified but unavailable, raises an error."
+        )
+    )
 
     args = parser.parse_args()
 
@@ -92,7 +102,7 @@ def parse_args() -> Tuple[str, str, float, bool]:
         )
         sys.exit(1)
 
-    return args.language, args.voice, args.speed, args.history_off
+    return args.language, args.voice, args.speed, args.history_off, args.device
 
 
 def get_input(history_off: bool, prompt="> ") -> str:

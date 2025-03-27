@@ -22,11 +22,11 @@ class TTSPlayer:
         self.audio_queue = queue.Queue()
         self.stop_event = threading.Event()
 
-    def change_language(self, new_lang: str) -> bool:
+    def change_language(self, new_lang: str, device: str) -> bool:
         """Change the language and reinitialize the pipeline."""
         if new_lang in self.languages:
             self.language = new_lang
-            self.pipeline = KPipeline(lang_code=self.language, repo_id=REPO_ID)
+            self.pipeline = KPipeline(lang_code=self.language, repo_id=REPO_ID, device=device)
             return True
         return False
 
@@ -69,59 +69,36 @@ class TTSPlayer:
         """Play audio chunks from the queue."""
         try:
             while not self.stop_event.is_set():
-                try:
-                    audio = self.audio_queue.get(timeout=0.5)
-                except queue.Empty:
-                    continue
+                audio = self.audio_queue.get()
 
                 if audio is None:
                     break
 
                 console.print("[dim]Playing chunk...[/dim]")
 
-                try:
-                    sd.play(audio, samplerate=SAMPLE_RATE)
-                    #TODO: try just sd.wait()
-                    start_time = time.time()
-                    duration = len(audio) / SAMPLE_RATE
-
-                    while sd.get_stream().active and (time.time() - start_time) < (
-                        duration + 0.5
-                    ):
-                        if self.stop_event.is_set():
-                            sd.stop()
-                            return
-                        time.sleep(0.1)
-                except Exception as e:
-                    console.print(f"[dim]Playback chunk error: {e}[/dim]")
+                sd.play(audio, samplerate=SAMPLE_RATE)
+                while sd.get_stream().active:
                     if self.stop_event.is_set():
-                        break
+                        sd.stop()
+                        return
+                    time.sleep(0.2)
 
                 self.audio_queue.task_done()
             console.print("[green]Playback complete.[/]\n")
         except Exception as e:
             console.print(f"[dim]Playback thread error: {e}[/dim]")
 
-        # Make sure playback is stopped when thread exits
-        try:
-            sd.stop()
-        except Exception:
-            pass
-
     def stop_playback(self, printm=True) -> None:
         """Stop ongoing generation and playback."""
         self.stop_event.set()
 
         # Clear the queue
-        try:
-            while True:
-                try:
-                    self.audio_queue.get_nowait()
-                    self.audio_queue.task_done()
-                except Exception:
-                    break
-        except Exception:
-            pass
+        while True:
+            try:
+                self.audio_queue.get_nowait()
+                self.audio_queue.task_done()
+            except Exception:
+                break
         if printm:
             console.print("\n[yellow]Playback stopped.[/]\n")
 
@@ -152,4 +129,4 @@ class TTSPlayer:
             play_thread.join()
         except KeyboardInterrupt:
             self.stop_playback()
-            console.print("\n[bold yellow]Interrupted. Type !quit to exit.[/]")
+            console.print("\n[bold yellow]Interrupted. Type !q to exit.[/]")

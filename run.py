@@ -19,7 +19,7 @@ from utils import (
 )
 
 
-def start(language: str, voice: str, speed: float, history_off: bool) -> None:
+def start(language: str, voice: str, speed: float, history_off: bool, device: str) -> None:
     """Initialize and run"""
     try:
         # Initialize TTS pipeline
@@ -30,7 +30,7 @@ def start(language: str, voice: str, speed: float, history_off: bool) -> None:
             progress.add_task(
                 "[yellow]Initializing Kokoro pipeline...[/]", total=None
             )
-            pipeline = KPipeline(lang_code=language, repo_id=REPO_ID)
+            pipeline = KPipeline(lang_code=language, repo_id=REPO_ID, device=device)
 
         # Display starting configuration
         console.print("[green]Starting with:[/]")
@@ -39,13 +39,13 @@ def start(language: str, voice: str, speed: float, history_off: bool) -> None:
         console.print(f"  Speed: [cyan]{speed}[/]")
 
         # Run interactive mode
-        run_interactive(pipeline, language, voice, speed, history_off, prompt=PROMPT)
+        run_interactive(pipeline, language, voice, speed, history_off, device, PROMPT)
     except KeyboardInterrupt:
         console.print("\n[bold yellow]Program terminated by user.[/]")
     except EOFError:
         console.print("\n")
     except Exception as e:
-        console.print(f"[bold red]Fatal error:[/] {str(e)}")
+        console.print(f"[bold red]Error:[/] {str(e)}")
 
 
 def run_interactive(
@@ -54,6 +54,7 @@ def run_interactive(
     voice: str,
     speed: float,
     history_off: bool,
+    device: str,
     prompt="> ",
 ) -> None:
     """Run an interactive TTS session with dynamic settings."""
@@ -74,7 +75,7 @@ def run_interactive(
                 arg = parts[1] if len(parts) > 1 else ""
 
                 if cmd == "!lang":
-                    if player.change_language(arg):
+                    if player.change_language(arg, device):
                         console.print(
                             f"[green]Language changed to:[/] {player.languages[arg]}"
                         )
@@ -135,8 +136,8 @@ def run_interactive(
 
         except KeyboardInterrupt:
             player.stop_playback(False)
-            console.print("\n[bold yellow]Interrupted. Type !quit to exit.[/]")
+            console.print("\n[bold yellow]Interrupted. Type !q to exit.[/]")
         except EOFError:
-            console.print("\n")
+            console.print("\n[bold yellow]Type !q to exit.[/]")
         except Exception as e:
             console.print(f"[bold red]Error:[/] {str(e)}")

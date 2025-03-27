@@ -8,13 +8,13 @@ from utils import init_history
 
 def main():
     """Main entry point."""
-    language, voice, speed, history_off = parse_args()
+    language, voice, speed, history_off, device = parse_args()
 
     init_history(history_off)
 
     from run import start
 
-    start(language, voice, speed, history_off)
+    start(language, voice, speed, history_off, device)
 
 
 if __name__ == "__main__":
