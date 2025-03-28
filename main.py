@@ -3,18 +3,18 @@
 import sys
 
 from input_hander import parse_args
+from models import Args
 from utils import init_history
 
 
 def main():
     """Main entry point."""
-    language, voice, speed, history_off, device, input_text, output_file = parse_args()
+    args: Args = parse_args()
 
-    init_history(history_off)
+    init_history(args.history_off)
 
     from run import start
-
-    start(language, voice, speed, history_off, device, input_text, output_file)
+    start(args)
 
 
 if __name__ == "__main__":

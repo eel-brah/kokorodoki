@@ -1,7 +1,9 @@
 import queue
+import sys
 import threading
 import time
-import sys
+from dataclasses import dataclass
+from typing import Optional
 
 import sounddevice as sd
 import soundfile as sf
@@ -183,3 +185,15 @@ class TTSPlayer:
             gen_thread.join()
             play_thread.join()
             sys.exit()
+
+
+@dataclass
+class Args:
+    language: str
+    voice: str
+    speed: float
+    history_off: bool
+    device: str
+    input_text: Optional[str]
+    output_file: Optional[str]
+    all_voices: bool

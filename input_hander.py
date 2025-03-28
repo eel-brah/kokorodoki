@@ -1,6 +1,6 @@
 import argparse
 import sys
-from typing import Optional, Tuple
+from models import Args
 
 from config import (
     DEFAULT_LANGUAGE,
@@ -19,7 +19,7 @@ from utils import (
 )
 
 
-def parse_args() -> Tuple[str, str, float, bool, str, Optional[str], Optional[str]]:
+def parse_args() -> Args:
     """Parse command-line arguments for language, voice, and speed."""
     parser = argparse.ArgumentParser(
         description="Real-time TTS with Kokoro-82M. Use !commands to adjust settings."
@@ -93,6 +93,11 @@ def parse_args() -> Tuple[str, str, float, bool, str, Optional[str], Optional[st
         default=None,
         help="Output file path (only valid when --text or --file is used)",
     )
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Read a text/file with all the available voices (only valid when --text or --file is used)",
+    )
 
     args = parser.parse_args()
 
@@ -125,9 +130,14 @@ def parse_args() -> Tuple[str, str, float, bool, str, Optional[str], Optional[st
         )
         sys.exit(1)
 
-    # Validate that output isn't used without input
+    # Validate that output/all isn't used without input
+
+    if args.output is not None and args.all:
+        parser.error("--output/-o can't be used with --all")
     if args.output is not None and args.text is None and args.file is None:
-        parser.error("--output can only be used with --text or --file")
+        parser.error("--output/-o can only be used with --text or --file")
+    if args.all and args.text is None and args.file is None:
+        parser.error("--all can only be used with --text or --file")
 
     # Handle input text/file
     input_text = None
@@ -146,7 +156,7 @@ def parse_args() -> Tuple[str, str, float, bool, str, Optional[str], Optional[st
             console.print("[bold red]Error:[/] Text cannot be empty")
             sys.exit(1)
         input_text = args.text
-    return (
+    return Args(
         args.language,
         args.voice,
         args.speed,
@@ -154,8 +164,8 @@ def parse_args() -> Tuple[str, str, float, bool, str, Optional[str], Optional[st
         args.device,
         input_text,
         args.output,
+        args.all,
     )
-
 
 def get_input(history_off: bool, prompt="> ") -> str:
     user_input = input(prompt).strip()

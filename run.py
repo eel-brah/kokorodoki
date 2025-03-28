@@ -12,25 +12,18 @@ with Progress(
 
 from config import MAX_SPEED, MIN_SPEED, PROMPT, REPO_ID, console
 from input_hander import get_input
-from models import TTSPlayer
+from models import Args, TTSPlayer
 from utils import (
     clear_history,
     display_help,
     display_languages,
     display_voices,
     get_language_map,
+    get_voices,
 )
 
 
-def start(
-    language: str,
-    voice: str,
-    speed: float,
-    history_off: bool,
-    device: str,
-    input_text: Optional[str],
-    output_file: Optional[str],
-) -> None:
+def start(args: Args) -> None:
     """Initialize and run"""
     try:
         with Progress(
@@ -39,16 +32,30 @@ def start(
         ) as progress:
             progress.add_task("[yellow]Initializing Kokoro pipeline...[/]", total=None)
             # Initialize TTS pipeline
-            pipeline = KPipeline(lang_code=language, repo_id=REPO_ID, device=device)
+            pipeline = KPipeline(
+                lang_code=args.language, repo_id=REPO_ID, device=args.device
+            )
 
-        # Run
-        if input_text:
+        if args.all_voices and args.input_text:
+            run_with_all(pipeline, args.language, args.speed, args.input_text)
+        elif args.input_text:
             run_noninteractive(
-                pipeline, language, voice, speed, input_text, output_file
+                pipeline,
+                args.language,
+                args.voice,
+                args.speed,
+                args.input_text,
+                args.output_file,
             )
         else:
             run_interactive(
-                pipeline, language, voice, speed, history_off, device, PROMPT
+                pipeline,
+                args.language,
+                args.voice,
+                args.speed,
+                args.history_off,
+                args.device,
+                PROMPT,
             )
     except KeyboardInterrupt:
         console.print("\n[bold yellow]Terminated[/]")
@@ -56,6 +63,29 @@ def start(
         console.print("\n")
     except Exception as e:
         console.print(f"[bold red]Error:[/] {str(e)}")
+
+
+def run_with_all(
+    pipeline: KPipeline,
+    language: str,
+    speed: float,
+    input_text: str,
+) -> None:
+    """Run with all available voices"""
+    console.print(
+        f"\n[bold blue]Reading with all available {get_language_map()[language]} voices[/]\n"
+    )
+    target_voices = [voice for voice in get_voices() if voice.startswith(language)]
+
+    player = TTSPlayer(pipeline, language, target_voices[0], speed)
+    try:
+        for voice in target_voices:
+            player.change_voice(voice)
+            console.print(f"[cyan]{voice} speaking:[/] {input_text}")
+            player.speak(input_text, interactive=False)
+    except KeyboardInterrupt:
+        console.print("[bold yellow]Exiting...[/]")
+        sys.exit()
 
 
 def run_noninteractive(
@@ -90,16 +120,16 @@ def run_interactive(
 ) -> None:
     """Run an interactive TTS session with dynamic settings."""
 
+    player = TTSPlayer(pipeline, language, voice, speed)
+
+    console.print("[bold green]Interactive TTS started.[/]")
+    display_help()
+
     # Display starting configuration
     console.print("[green]Starting with:[/]")
     console.print(f"  Language: [cyan]{get_language_map()[language]}[/]")
     console.print(f"  Voice: [cyan]{voice}[/]")
     console.print(f"  Speed: [cyan]{speed}[/]")
-
-    player = TTSPlayer(pipeline, language, voice, speed)
-
-    console.print("[bold green]Interactive TTS started.[/]")
-    display_help()
     while True:
         try:
             user_input = get_input(history_off, prompt)
