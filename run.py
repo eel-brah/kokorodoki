@@ -11,8 +11,8 @@ with Progress(
     from kokoro import KPipeline
 
 from config import MAX_SPEED, MIN_SPEED, PROMPT, REPO_ID, console
-from input_hander import get_input
-from models import Args, TTSPlayer
+from input_hander import Args, get_input
+from models import  TTSPlayer
 from utils import (
     clear_history,
     display_help,

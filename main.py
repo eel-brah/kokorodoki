@@ -2,8 +2,7 @@
 
 import sys
 
-from input_hander import parse_args
-from models import Args
+from input_hander import Args, parse_args
 from utils import init_history
 
 
@@ -14,6 +13,7 @@ def main():
     init_history(args.history_off)
 
     from run import start
+
     start(args)
 
 

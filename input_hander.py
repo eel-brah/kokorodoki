@@ -1,6 +1,7 @@
 import argparse
 import sys
-from models import Args
+from dataclasses import dataclass
+from typing import Optional
 
 from config import (
     DEFAULT_LANGUAGE,
@@ -17,6 +18,18 @@ from utils import (
     get_voices,
     save_history,
 )
+
+
+@dataclass
+class Args:
+    language: str
+    voice: str
+    speed: float
+    history_off: bool
+    device: str
+    input_text: Optional[str]
+    output_file: Optional[str]
+    all_voices: bool
 
 
 def parse_args() -> Args:
@@ -166,6 +179,7 @@ def parse_args() -> Args:
         args.output,
         args.all,
     )
+
 
 def get_input(history_off: bool, prompt="> ") -> str:
     user_input = input(prompt).strip()

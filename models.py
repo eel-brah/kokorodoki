@@ -2,8 +2,6 @@ import queue
 import sys
 import threading
 import time
-from dataclasses import dataclass
-from typing import Optional
 
 import sounddevice as sd
 import soundfile as sf
@@ -184,16 +182,5 @@ class TTSPlayer:
                 console.print("\n[bold yellow]Exiting...[/]")
             gen_thread.join()
             play_thread.join()
-            sys.exit()
-
-
-@dataclass
-class Args:
-    language: str
-    voice: str
-    speed: float
-    history_off: bool
-    device: str
-    input_text: Optional[str]
-    output_file: Optional[str]
-    all_voices: bool
+            if not interactive:
+                sys.exit()
