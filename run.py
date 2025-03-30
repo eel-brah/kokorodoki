@@ -189,7 +189,7 @@ def run_interactive(
                 elif cmd == "!clear":
                     print("\033[H\033[J", end="")
 
-                elif cmd == "!hclear":
+                elif cmd == "!clear_history":
                     clear_history()
 
                 else:

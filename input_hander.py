@@ -35,6 +35,7 @@ class Args:
 def parse_args() -> Args:
     """Parse command-line arguments for language, voice, and speed."""
     parser = argparse.ArgumentParser(
+        prog="kokorodoki",
         description="Real-time TTS with Kokoro-82M. Use !commands to adjust settings."
     )
 
@@ -78,6 +79,7 @@ def parse_args() -> Args:
         "--device",
         type=str,
         default=None,
+        choices=['cuda', 'cpu'],
         help=(
             "Set the device for computation ('cuda' for GPU or 'cpu'). "
             "Default: Auto-selects 'cuda' if available, otherwise falls back to 'cpu'. "

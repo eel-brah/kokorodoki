@@ -10,5 +10,18 @@ REPO_ID = "hexgrad/Kokoro-82M"
 HISTORY_FILE = ".kokorodoki_history"
 HISTORY_LIMIT = 1024
 PROMPT = "> "
+COMMANDS = [
+    "!lang",
+    "!voice",
+    "!speed",
+    "!stop",
+    "!list_langs",
+    "!list_voices",
+    "!clear",
+    "!clear_history",
+    "!help",
+    "!quit",
+]
+
 
 console = Console()

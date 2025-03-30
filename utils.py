@@ -4,7 +4,7 @@ from typing import Dict, List
 
 from rich.table import Table
 
-from config import HISTORY_FILE, HISTORY_LIMIT, console
+from config import COMMANDS, HISTORY_FILE, HISTORY_LIMIT, console
 
 
 def get_language_map() -> Dict[str, str]:
@@ -134,7 +134,7 @@ def display_help() -> None:
     table.add_row("!list_langs", "List available languages")
     table.add_row("!list_voices", "List available voices")
     table.add_row("!clear", "Clear screen")
-    table.add_row("!hclear", "Clear history")
+    table.add_row("!clear_history", "Clear history")
     table.add_row("!help or !h", "Show this help message")
     table.add_row("!quit or !q", "Exit the program")
 
@@ -167,3 +167,16 @@ def init_history(history_off: bool) -> None:
             except IOError:
                 pass
         readline.set_history_length(HISTORY_LIMIT)
+
+
+def init_completer() -> None:
+    readline.parse_and_bind("tab: complete")
+    readline.set_completer(completer)
+    readline.set_completer_delims("")
+    readline.parse_and_bind("set completion-ignore-case on")
+
+
+def completer(text, state):
+    """Auto-complete function for readline."""
+    options = [cmd for cmd in COMMANDS if cmd.startswith(text)]
+    return options[state] if state < len(options) else None
