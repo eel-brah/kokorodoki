@@ -1,6 +1,6 @@
 import os
 import readline
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from rich.table import Table
 
@@ -176,7 +176,7 @@ def init_completer() -> None:
     readline.parse_and_bind("set completion-ignore-case on")
 
 
-def completer(text, state):
+def completer(text: str, state: int) -> Optional[str]:
     """Auto-complete function for readline."""
     options = [cmd for cmd in COMMANDS if cmd.startswith(text)]
     return options[state] if state < len(options) else None

@@ -30,6 +30,7 @@ class Args:
     input_text: Optional[str]
     output_file: Optional[str]
     all_voices: bool
+    daemon: bool
 
 
 def parse_args() -> Args:
@@ -113,6 +114,12 @@ def parse_args() -> Args:
         action="store_true",
         help="Read a text/file with all the available voices (only valid when --text or --file is used)",
     )
+    #TEST:
+    parser.add_argument(
+        "--daemon",
+        action="store_true",
+        help="daemon mode",
+    )
 
     args = parser.parse_args()
 
@@ -180,6 +187,7 @@ def parse_args() -> Args:
         input_text,
         args.output,
         args.all,
+        args.daemon
     )
 
 

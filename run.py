@@ -1,7 +1,9 @@
 import sys
+import socket
 from typing import Optional
 
 from rich.progress import Progress, SpinnerColumn, TextColumn
+from config import HOST, PORT
 
 with Progress(
     SpinnerColumn("dots", style="yellow", speed=0.8),
@@ -12,7 +14,7 @@ with Progress(
 
 from config import MAX_SPEED, MIN_SPEED, PROMPT, REPO_ID, console
 from input_hander import Args, get_input
-from models import  TTSPlayer
+from models import TTSPlayer
 from utils import (
     clear_history,
     display_help,
@@ -21,7 +23,6 @@ from utils import (
     get_language_map,
     get_voices,
 )
-
 
 def start(args: Args) -> None:
     """Initialize and run"""
@@ -36,6 +37,13 @@ def start(args: Args) -> None:
                 lang_code=args.language, repo_id=REPO_ID, device=args.device
             )
 
+        if args.daemon:
+            run_deamon(
+                pipeline,
+                args.language,
+                args.voice,
+                args.speed,
+            )
         if args.all_voices and args.input_text:
             run_with_all(pipeline, args.language, args.speed, args.input_text)
         elif args.input_text:
@@ -64,6 +72,39 @@ def start(args: Args) -> None:
     except Exception as e:
         console.print(f"[bold red]Error:[/] {str(e)}")
 
+
+def run_deamon(
+    pipeline: KPipeline,
+    language: str,
+    voice: str,
+    speed: float,
+) -> None:
+    """Start daemon mode"""
+    try:
+        while True:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
+                server_socket.bind((HOST, PORT))
+                server_socket.listen(1)
+                print(f"Listening on {HOST}:{PORT}...")
+                conn, addr = server_socket.accept()
+                with conn:
+                    print(f"Connected by {addr}")
+                    clipboard_data = conn.recv(4096).decode()
+                    print(f"Recieved {clipboard_data[:20]}")
+                    player = TTSPlayer(pipeline, language, voice, speed)
+                    player.speak(clipboard_data, interactive=False)
+    except KeyboardInterrupt:
+        console.print("[bold yellow]Exiting...[/]")
+        sys.exit()
+
+# data = b""
+# while True:
+#     chunk = conn.recv(4096)  
+#     if not chunk:  
+#         break
+#     data += chunk 
+#
+# clipboard_data = data.decode()
 
 def run_with_all(
     pipeline: KPipeline,

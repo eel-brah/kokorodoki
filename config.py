@@ -22,6 +22,8 @@ COMMANDS = [
     "!help",
     "!quit",
 ]
+HOST = "0.0.0.0" 
+PORT = 5561     
 
 
 console = Console()
