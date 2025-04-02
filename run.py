@@ -1,18 +1,20 @@
-import sys
 import socket
+import sys
 from typing import Optional
 
 from rich.progress import Progress, SpinnerColumn, TextColumn
-from config import HOST, PORT
 
-with Progress(
-    SpinnerColumn("dots", style="yellow", speed=0.8),
-    TextColumn("[progress.description]{task.description}"),
-) as progress:
-    progress.add_task("[yellow]Initializing Kokoro...[/]", total=None)
+from config import HOST, MAX_SPEED, MIN_SPEED, PORT, PROMPT, REPO_ID, console
+
+with console.status(
+    "[yellow]Initializing Kokoro...[/]",
+    spinner="dots",
+    spinner_style="yellow",
+    speed=0.8,
+):
     from kokoro import KPipeline
+console.print("[bold green]Kokoro initialized!")
 
-from config import MAX_SPEED, MIN_SPEED, PROMPT, REPO_ID, console
 from input_hander import Args, get_input
 from models import TTSPlayer
 from utils import (
@@ -24,18 +26,21 @@ from utils import (
     get_voices,
 )
 
+
 def start(args: Args) -> None:
     """Initialize and run"""
     try:
-        with Progress(
-            SpinnerColumn("dots", style="yellow", speed=0.8),
-            TextColumn("[progress.description]{task.description}"),
-        ) as progress:
-            progress.add_task("[yellow]Initializing Kokoro pipeline...[/]", total=None)
+        with console.status(
+            "[yellow]Initializing Kokoro pipeline...[/]",
+            spinner="dots",
+            spinner_style="yellow",
+            speed=0.8,
+        ):
             # Initialize TTS pipeline
             pipeline = KPipeline(
                 lang_code=args.language, repo_id=REPO_ID, device=args.device
             )
+        console.print("[bold green]Kokoro pipeline initialized!")
 
         if args.daemon:
             run_deamon(
@@ -43,15 +48,19 @@ def start(args: Args) -> None:
                 args.language,
                 args.voice,
                 args.speed,
+                args.verbose,
             )
         if args.all_voices and args.input_text:
-            run_with_all(pipeline, args.language, args.speed, args.input_text)
+            run_with_all(
+                pipeline, args.language, args.speed, args.verbose, args.input_text
+            )
         elif args.input_text:
             run_noninteractive(
                 pipeline,
                 args.language,
                 args.voice,
                 args.speed,
+                args.verbose,
                 args.input_text,
                 args.output_file,
             )
@@ -61,6 +70,7 @@ def start(args: Args) -> None:
                 args.language,
                 args.voice,
                 args.speed,
+                args.verbose,
                 args.history_off,
                 args.device,
                 PROMPT,
@@ -78,6 +88,7 @@ def run_deamon(
     language: str,
     voice: str,
     speed: float,
+    verbose: bool,
 ) -> None:
     """Start daemon mode"""
     try:
@@ -91,25 +102,28 @@ def run_deamon(
                     print(f"Connected by {addr}")
                     clipboard_data = conn.recv(4096).decode()
                     print(f"Recieved {clipboard_data[:20]}")
-                    player = TTSPlayer(pipeline, language, voice, speed)
+                    player = TTSPlayer(pipeline, language, voice, speed, verbose)
                     player.speak(clipboard_data, interactive=False)
     except KeyboardInterrupt:
         console.print("[bold yellow]Exiting...[/]")
         sys.exit()
 
+
 # data = b""
 # while True:
-#     chunk = conn.recv(4096)  
-#     if not chunk:  
+#     chunk = conn.recv(4096)
+#     if not chunk:
 #         break
-#     data += chunk 
+#     data += chunk
 #
 # clipboard_data = data.decode()
+
 
 def run_with_all(
     pipeline: KPipeline,
     language: str,
     speed: float,
+    verbose: bool,
     input_text: str,
 ) -> None:
     """Run with all available voices"""
@@ -118,11 +132,11 @@ def run_with_all(
     )
     target_voices = [voice for voice in get_voices() if voice.startswith(language)]
 
-    player = TTSPlayer(pipeline, language, target_voices[0], speed)
+    player = TTSPlayer(pipeline, language, target_voices[0], speed, verbose)
     try:
         for voice in target_voices:
             player.change_voice(voice)
-            console.print(f"[cyan]{voice} speaking:[/] {input_text}")
+            console.print(f"[cyan]{voice} speaking:[/] {input_text[:30]}")
             player.speak(input_text, interactive=False)
     except KeyboardInterrupt:
         console.print("[bold yellow]Exiting...[/]")
@@ -134,15 +148,18 @@ def run_noninteractive(
     language: str,
     voice: str,
     speed: float,
+    verbose: bool,
     input_text: str,
     output_file: Optional[str],
 ) -> None:
     """Generate audio"""
-    player = TTSPlayer(pipeline, language, voice, speed)
+    player = TTSPlayer(pipeline, language, voice, speed, verbose)
     if output_file is None:
-        console.print(f"[cyan]Speaking:[/] {input_text}")
         try:
-            player.speak(input_text, interactive=False)
+            with console.status(
+                f"[cyan]Speaking:[/] {input_text[:30]}", spinner_style="cyan"
+            ):
+                player.speak(input_text, interactive=False)
         except KeyboardInterrupt:
             console.print("[bold yellow]Exiting...[/]")
             sys.exit()
@@ -155,15 +172,16 @@ def run_interactive(
     language: str,
     voice: str,
     speed: float,
+    verbose: bool,
     history_off: bool,
     device: str,
     prompt="> ",
 ) -> None:
     """Run an interactive TTS session with dynamic settings."""
 
-    player = TTSPlayer(pipeline, language, voice, speed)
+    player = TTSPlayer(pipeline, language, voice, speed, verbose)
 
-    console.print("[bold green]Interactive TTS started.[/]")
+    console.rule("[bold green]Interactive TTS started[/]")
     display_help()
 
     # Display starting configuration
@@ -233,14 +251,18 @@ def run_interactive(
                 elif cmd == "!clear_history":
                     clear_history()
 
+                elif cmd == "!verbose":
+                    player.verbose = not player.verbose
                 else:
                     console.print(f"[red]Unknown command: {cmd}[/]")
                     console.print("Type !help for available commands.")
 
                 continue
 
-            console.print(f"[cyan]Speaking:[/] {user_input}")
-            player.speak(user_input)
+            with console.status(
+                f"[cyan]Speaking:[/] {user_input[:30]}", spinner_style="cyan"
+            ):
+                player.speak(user_input)
 
         except KeyboardInterrupt:
             player.stop_playback(False)

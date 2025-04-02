@@ -31,6 +31,7 @@ class Args:
     output_file: Optional[str]
     all_voices: bool
     daemon: bool
+    verbose: bool
 
 
 def parse_args() -> Args:
@@ -68,8 +69,11 @@ def parse_args() -> Args:
     )
     parser.add_argument(
         "--list-voices",
-        action="store_true",
-        help="List available voices",
+        type=str,
+        nargs='?',
+        const=None,
+        default=False,
+        help="List available voices. Optionally provide a language to filter by.",
     )
     parser.add_argument(
         "--history_off",
@@ -120,6 +124,12 @@ def parse_args() -> Args:
         action="store_true",
         help="daemon mode",
     )
+    parser.add_argument(
+        "--verbose",
+        "-V",
+        action="store_true",
+        help="Print what is being done",
+    )
 
     args = parser.parse_args()
 
@@ -128,8 +138,8 @@ def parse_args() -> Args:
         display_languages()
         sys.exit(0)
 
-    if args.list_voices:
-        display_voices()
+    if args.list_voices is not False:
+        display_voices(args.list_voices)
         sys.exit(0)
 
     # Validate inputs
@@ -187,7 +197,8 @@ def parse_args() -> Args:
         input_text,
         args.output,
         args.all,
-        args.daemon
+        args.daemon,
+        args.verbose,
     )
 
 

@@ -18,6 +18,7 @@ COMMANDS = [
     "!list_langs",
     "!list_voices",
     "!clear",
+    "!verbose",
     "!clear_history",
     "!help",
     "!quit",

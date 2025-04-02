@@ -2,6 +2,7 @@ import os
 import readline
 from typing import Dict, List, Optional
 
+from rich import box
 from rich.table import Table
 
 from config import COMMANDS, HISTORY_FILE, HISTORY_LIMIT, console
@@ -85,7 +86,7 @@ def get_voices() -> List[str]:
 def display_languages() -> None:
     """Display available languages in a formatted table."""
     languages = get_language_map()
-    table = Table(title="Available Languages")
+    table = Table(title="Available Languages", box=box.ROUNDED)
     table.add_column("Code", style="cyan")
     table.add_column("Language", style="green")
 
@@ -95,35 +96,41 @@ def display_languages() -> None:
     console.print(table)
 
 
-def display_voices() -> None:
+def display_voices(language=None) -> None:
     """Display available voices in a formatted table."""
     voices = get_voices()
-    table = Table(title="Available Voices")
+    table = Table(title="Available Voices", box=box.ROUNDED)
     table.add_column("Voice ID", style="cyan")
     table.add_column("Prefix", style="yellow")
 
+    if language not in get_language_map() and language is not None:
+        console.print(f"[bold red]Error:[/] Invalid language '{language}'")
+        display_languages()
+        return
+
     for voice in voices:
         prefix, _ = voice.split("_", 1)
-        prefix_desc = {
-            "a": "American",
-            "b": "British",
-            "e": "Spanish",
-            "f": "French",
-            "h": "Hindi",
-            "i": "Italian",
-            "p": "Portuguese",
-            "j": "Japanese",
-            "z": "Mandarin",
-        }.get(prefix[0], "Unknown")
-        gender = "Female" if prefix[1] == "f" else "Male"
-        table.add_row(voice, f"{prefix_desc} {gender}")
+        if language is None or language == prefix[0]:
+            prefix_desc = {
+                "a": "American",
+                "b": "British",
+                "e": "Spanish",
+                "f": "French",
+                "h": "Hindi",
+                "i": "Italian",
+                "p": "Portuguese",
+                "j": "Japanese",
+                "z": "Mandarin",
+            }.get(prefix[0], "Unknown")
+            gender = "Female" if prefix[1] == "f" else "Male"
+            table.add_row(voice, f"{prefix_desc} {gender}")
 
     console.print(table)
 
 
 def display_help() -> None:
     """Display help information."""
-    table = Table(title="Available Commands")
+    table = Table(title="Available Commands", box=box.ROUNDED)
     table.add_column("Command", style="cyan")
     table.add_column("Description", style="green")
 
@@ -135,6 +142,7 @@ def display_help() -> None:
     table.add_row("!list_voices", "List available voices")
     table.add_row("!clear", "Clear screen")
     table.add_row("!clear_history", "Clear history")
+    table.add_row("!verbose", "Enable or Disable printing of what is being done")
     table.add_row("!help or !h", "Show this help message")
     table.add_row("!quit or !q", "Exit the program")
 

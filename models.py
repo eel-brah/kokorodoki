@@ -22,11 +22,12 @@ from utils import get_language_map, get_voices
 class TTSPlayer:
     """Class to handle TTS generation and playback."""
 
-    def __init__(self, pipeline: KPipeline, language: str, voice: str, speed: float):
+    def __init__(self, pipeline: KPipeline, language: str, voice: str, speed: float, verbose: bool):
         self.pipeline = pipeline
         self.language = language
         self.voice = voice
         self.speed = speed
+        self.verbose = verbose
         self.languages = get_language_map()
         self.voices = get_voices()
         self.audio_queue = queue.Queue()
@@ -69,7 +70,8 @@ class TTSPlayer:
 
                 if result.audio is not None:
                     audio = result.audio.numpy()
-                    console.print(f"[dim]Generated: {result.graphemes[:30]}...[/]")
+                    if self.verbose:
+                        console.print(f"[dim]Generated: {result.graphemes[:30]}...[/]")
                     self.audio_queue.put(audio)
 
             self.audio_queue.put(None)  # Signal end of generation
@@ -128,7 +130,8 @@ class TTSPlayer:
                 if audio is None:
                     break
 
-                console.print("[dim]Playing chunk...[/dim]")
+                if self.verbose:
+                    console.print("[dim]Playing chunk...[/dim]")
 
                 sd.play(audio, samplerate=SAMPLE_RATE)
                 while sd.get_stream().active:
