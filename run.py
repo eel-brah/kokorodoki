@@ -2,8 +2,6 @@ import socket
 import sys
 from typing import Optional
 
-from rich.progress import Progress, SpinnerColumn, TextColumn
-
 from config import HOST, MAX_SPEED, MIN_SPEED, PORT, PROMPT, REPO_ID, console
 
 with console.status(
@@ -50,7 +48,7 @@ def start(args: Args) -> None:
                 args.speed,
                 args.verbose,
             )
-        if args.all_voices and args.input_text:
+        elif args.all_voices and args.input_text:
             run_with_all(
                 pipeline, args.language, args.speed, args.verbose, args.input_text
             )
