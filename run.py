@@ -1,5 +1,6 @@
 import socket
 import sys
+import threading
 from typing import Optional
 
 from config import HOST, MAX_SPEED, MIN_SPEED, PORT, PROMPT, REPO_ID, console
@@ -81,6 +82,13 @@ def start(args: Args) -> None:
         console.print(f"[bold red]Error:[/] {str(e)}")
 
 
+def speak_thread(clipboard_data, player):
+    try:
+        player.speak(clipboard_data, interactive=False)
+    except Exception as e:
+        print(f"Error in thread: {str(e)}")
+
+
 def run_deamon(
     pipeline: KPipeline,
     language: str,
@@ -89,32 +97,63 @@ def run_deamon(
     verbose: bool,
 ) -> None:
     """Start daemon mode"""
+    current_thread = None
+    player = TTSPlayer(pipeline, language, voice, speed, verbose)
+
     try:
-        while True:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
-                server_socket.bind((HOST, PORT))
-                server_socket.listen(1)
-                print(f"Listening on {HOST}:{PORT}...")
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
+            server_socket.bind((HOST, PORT))
+            server_socket.listen(1)
+            print(f"Listening on {HOST}:{PORT}...")
+
+            while True:
                 conn, addr = server_socket.accept()
                 with conn:
                     print(f"Connected by {addr}")
-                    clipboard_data = conn.recv(4096).decode()
-                    print(f"Recieved {clipboard_data[:20]}")
-                    player = TTSPlayer(pipeline, language, voice, speed, verbose)
-                    player.speak(clipboard_data, interactive=False)
+                    data = b""
+                    while True:
+                        chunk = conn.recv(4096)
+                        if not chunk:
+                            break
+                        data += chunk
+
+                    clipboard_data = data.decode()
+                    print(f"Received {clipboard_data[:20]}")
+
+                    if clipboard_data == "!stop":
+                        print("Stopping previous playback...")
+                        if current_thread is not None and current_thread.is_alive():
+                            print("Stopping previous playback...")
+                            player.stop_playback()
+                            current_thread.join()
+                        continue
+
+                    # Stop previous thread
+                    if current_thread is not None and current_thread.is_alive():
+                        print("Stopping previous playback...")
+                        player.stop_playback()
+                        current_thread.join()
+
+                    # Start new thread
+                    current_thread = threading.Thread(
+                        target=speak_thread,
+                        args=(clipboard_data, player),
+                    )
+                    current_thread.daemon = True
+                    current_thread.start()
+                    print("Started new playback thread")
+
     except KeyboardInterrupt:
-        console.print("[bold yellow]Exiting...[/]")
+        print("Exiting...")
+        if current_thread is not None and current_thread.is_alive():
+            player.stop_playback()
+            current_thread.join(timeout=1)
         sys.exit()
-
-
-# data = b""
-# while True:
-#     chunk = conn.recv(4096)
-#     if not chunk:
-#         break
-#     data += chunk
-#
-# clipboard_data = data.decode()
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        if current_thread is not None and current_thread.is_alive():
+            player.stop_playback()
+            current_thread.join(timeout=1)
 
 
 def run_with_all(

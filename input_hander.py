@@ -38,7 +38,7 @@ def parse_args() -> Args:
     """Parse command-line arguments for language, voice, and speed."""
     parser = argparse.ArgumentParser(
         prog="kokorodoki",
-        description="Real-time TTS with Kokoro-82M. Use !commands to adjust settings."
+        description="Real-time TTS with Kokoro-82M. Use !commands to adjust settings.",
     )
 
     parser.add_argument(
@@ -64,18 +64,21 @@ def parse_args() -> Args:
     )
     parser.add_argument(
         "--list-languages",
+        "--list_languages",
         action="store_true",
         help="List available languages",
     )
     parser.add_argument(
         "--list-voices",
+        "--list_voices",
         type=str,
-        nargs='?',
+        nargs="?",
         const=None,
         default=False,
         help="List available voices. Optionally provide a language to filter by.",
     )
     parser.add_argument(
+        "--history-off",
         "--history_off",
         action="store_true",
         help="Disable the saving of history",
@@ -84,7 +87,7 @@ def parse_args() -> Args:
         "--device",
         type=str,
         default=None,
-        choices=['cuda', 'cpu'],
+        choices=["cuda", "cpu"],
         help=(
             "Set the device for computation ('cuda' for GPU or 'cpu'). "
             "Default: Auto-selects 'cuda' if available, otherwise falls back to 'cpu'. "
@@ -118,7 +121,7 @@ def parse_args() -> Args:
         action="store_true",
         help="Read a text/file with all the available voices (only valid when --text or --file is used)",
     )
-    #TEST:
+    # TEST:
     parser.add_argument(
         "--daemon",
         action="store_true",
@@ -155,6 +158,12 @@ def parse_args() -> Args:
         console.print(f"[bold red]Error:[/] Invalid voice '{args.voice}'")
         display_voices()
         sys.exit(1)
+    if not args.voice.startswith(args.language):
+        console.print(
+            f"[bold red]Error:[/] Voice '{args.voice}' is not made for language '{get_language_map()[args.language]}'"
+        )
+        display_voices()
+        sys.exit(1)
 
     if not MIN_SPEED <= args.speed <= MAX_SPEED:
         console.print(
@@ -162,14 +171,20 @@ def parse_args() -> Args:
         )
         sys.exit(1)
 
-    # Validate that output/all isn't used without input
+    if args.output is not None and not args.output.endswith(".wav"):
+        console.print("[bold red]Error:[/] The output file name should end with .wav")
+        sys.exit(1)
 
+    # Validate that output/all isn't used without input
     if args.output is not None and args.all:
-        parser.error("--output/-o can't be used with --all")
+        console.print("[bold red]Error:[/] --output/-o can't be used with --all")
+        sys.exit(1)
     if args.output is not None and args.text is None and args.file is None:
-        parser.error("--output/-o can only be used with --text or --file")
+        console.print("[bold red]Error:[/] --output/-o can only be used with --text or --file")
+        sys.exit(1)
     if args.all and args.text is None and args.file is None:
-        parser.error("--all can only be used with --text or --file")
+        console.print("[bold red]Error:[/] --all can only be used with --text or --file")
+        sys.exit(1)
 
     # Handle input text/file
     input_text = None
