@@ -42,7 +42,7 @@ def start(args: Args) -> None:
         console.print("[bold green]Kokoro pipeline initialized!")
 
         if args.daemon:
-            run_deamon(
+            run_daemon(
                 pipeline,
                 args.language,
                 args.voice,
@@ -89,7 +89,7 @@ def speak_thread(clipboard_data, player):
         print(f"Error in thread: {str(e)}")
 
 
-def run_deamon(
+def run_daemon(
     pipeline: KPipeline,
     language: str,
     voice: str,
@@ -110,6 +110,8 @@ def run_deamon(
                 conn, addr = server_socket.accept()
                 with conn:
                     print(f"Connected by {addr}")
+
+                    # Read all
                     data = b""
                     while True:
                         chunk = conn.recv(4096)
@@ -120,6 +122,7 @@ def run_deamon(
                     clipboard_data = data.decode()
                     print(f"Received {clipboard_data[:20]}")
 
+                    # Stop if !stop received
                     if clipboard_data == "!stop":
                         print("Stopping previous playback...")
                         if current_thread is not None and current_thread.is_alive():

@@ -121,7 +121,6 @@ def parse_args() -> Args:
         action="store_true",
         help="Read a text/file with all the available voices (only valid when --text or --file is used)",
     )
-    # TEST:
     parser.add_argument(
         "--daemon",
         action="store_true",
