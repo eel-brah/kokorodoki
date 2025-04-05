@@ -124,15 +124,6 @@ def run_daemon(
                     clipboard_data = data.decode()
                     print(f"Received {clipboard_data[:20]}")
 
-                    # Stop if !stop received
-                    if clipboard_data == "!stop":
-                        print("Stopping previous playback...")
-                        if current_thread is not None and current_thread.is_alive():
-                            print("Stopping previous playback...")
-                            player.stop_playback()
-                            current_thread.join()
-                        continue
-
                 # Handle commands
                 if clipboard_data.startswith("!"):
                     parts = clipboard_data.split(maxsplit=1)
@@ -163,22 +154,27 @@ def run_daemon(
                         except ValueError:
                             print("Invalid speed value")
 
-                    elif cmd in ("!stop", cmd == "!exit"):
+                    elif cmd in ("!stop", "!exit", "!status"):
                         if current_thread is not None and current_thread.is_alive():
                             print("Stopping previous playback...")
                             player.stop_playback()
                             current_thread.join()
-                    elif cmd == "!exit":
-                        sys.exit(0)
-                    elif cmd == "!status":
-                        status_str = format_status(player.language, player.voice, player.speed)
-                        current_thread = threading.Thread(
-                            target=speak_thread,
-                            args=(status_str, player),
-                        )
-                        current_thread.daemon = True
-                        current_thread.start()
+                        if cmd == "!exit":
+                            print("Exiting...")
+                            sys.exit(0)
+                        if cmd == "!status":
+                            status_str = format_status(player.language, player.voice, player.speed)
+                            current_thread = threading.Thread(
+                                target=speak_thread,
+                                args=(status_str, player),
+                            )
+                            current_thread.daemon = True
+                            current_thread.start()
                 else:
+                    if current_thread is not None and current_thread.is_alive():
+                        print("Stopping previous playback...")
+                        player.stop_playback()
+                        current_thread.join()
                     current_thread = threading.Thread(
                         target=speak_thread,
                         args=(clipboard_data, player),
