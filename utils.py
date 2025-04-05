@@ -128,6 +128,24 @@ def display_voices(language=None) -> None:
     console.print(table)
 
 
+def display_status(language: str, voice: str, speed: float) -> None:
+    """Display current settings."""
+    console.print("[green]Currently:[/]")
+    console.print(f"  Language: [cyan]{get_language_map()[language]}[/]")
+    console.print(f"  Voice: [cyan]{voice}[/]")
+    console.print(f"  Speed: [cyan]{speed}[/]")
+
+
+def format_status(language: str, voice: str, speed: float) -> str:
+    """Return current settings as a formatted string."""
+    status_lines = [
+        f"Current language: {get_language_map()[language]}.",
+        f"Current voice: {voice}.",
+        f"Current speed: {speed}.",
+    ]
+    return "\n".join(status_lines)
+
+
 def display_help() -> None:
     """Display help information."""
     table = Table(title="Available Commands", box=box.ROUNDED)
@@ -140,6 +158,7 @@ def display_help() -> None:
     table.add_row("!stop", "Stop current playback")
     table.add_row("!list_langs", "List available languages")
     table.add_row("!list_voices", "List available voices")
+    table.add_row("!status", "Show current settings")
     table.add_row("!clear", "Clear screen")
     table.add_row("!clear_history", "Clear history")
     table.add_row("!verbose", "Enable or Disable printing of what is being done")

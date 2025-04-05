@@ -20,7 +20,9 @@ from utils import (
     clear_history,
     display_help,
     display_languages,
+    display_status,
     display_voices,
+    format_status,
     get_language_map,
     get_voices,
 )
@@ -161,11 +163,21 @@ def run_daemon(
                         except ValueError:
                             print("Invalid speed value")
 
-                    elif cmd == "!stop":
+                    elif cmd in ("!stop", cmd == "!exit"):
                         if current_thread is not None and current_thread.is_alive():
                             print("Stopping previous playback...")
                             player.stop_playback()
                             current_thread.join()
+                    elif cmd == "!exit":
+                        sys.exit(0)
+                    elif cmd == "!status":
+                        status_str = format_status(player.language, player.voice, player.speed)
+                        current_thread = threading.Thread(
+                            target=speak_thread,
+                            args=(status_str, player),
+                        )
+                        current_thread.daemon = True
+                        current_thread.start()
                 else:
                     current_thread = threading.Thread(
                         target=speak_thread,
@@ -319,6 +331,9 @@ def run_interactive(
 
                 elif cmd == "!clear_history":
                     clear_history()
+
+                elif cmd in ("!status", "!h"):
+                    display_status(player.language, player.voice, player.speed)
 
                 elif cmd == "!verbose":
                     player.verbose = not player.verbose

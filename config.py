@@ -15,6 +15,7 @@ COMMANDS = [
     "!voice",
     "!speed",
     "!stop",
+    "!status",
     "!list_langs",
     "!list_voices",
     "!clear",
