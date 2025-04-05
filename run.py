@@ -131,13 +131,42 @@ def run_daemon(
                             current_thread.join()
                         continue
 
-                    # Stop previous thread
-                    if current_thread is not None and current_thread.is_alive():
-                        print("Stopping previous playback...")
-                        player.stop_playback()
-                        current_thread.join()
+                # Handle commands
+                if clipboard_data.startswith("!"):
+                    parts = clipboard_data.split(maxsplit=1)
+                    cmd = parts[0].lower()
+                    arg = parts[1] if len(parts) > 1 else ""
 
-                    # Start new thread
+                    if cmd == "!lang":
+                        if player.change_language(arg, None):
+                            print(f"Language changed to: {player.languages[arg]}")
+                        else:
+                            print("Invalid language code.")
+
+                    elif cmd == "!voice":
+                        if player.change_voice(arg):
+                            print(f"Voice changed to: {arg}")
+                        else:
+                            print("Invalid voice.")
+
+                    elif cmd == "!speed":
+                        try:
+                            new_speed = float(arg)
+                            if player.change_speed(new_speed):
+                                print(f"Speed changed to: {new_speed}")
+                            else:
+                                print(
+                                    f"Speed must be between {MIN_SPEED} and {MAX_SPEED}"
+                                )
+                        except ValueError:
+                            print("Invalid speed value")
+
+                    elif cmd == "!stop":
+                        if current_thread is not None and current_thread.is_alive():
+                            print("Stopping previous playback...")
+                            player.stop_playback()
+                            current_thread.join()
+                else:
                     current_thread = threading.Thread(
                         target=speak_thread,
                         args=(clipboard_data, player),
@@ -214,7 +243,7 @@ def run_interactive(
     speed: float,
     verbose: bool,
     history_off: bool,
-    device: str,
+    device: Optional[str],
     prompt="> ",
 ) -> None:
     """Run an interactive TTS session with dynamic settings."""

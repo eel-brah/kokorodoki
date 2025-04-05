@@ -26,7 +26,7 @@ class Args:
     voice: str
     speed: float
     history_off: bool
-    device: str
+    device: Optional[str]
     input_text: Optional[str]
     output_file: Optional[str]
     all_voices: bool
@@ -35,7 +35,7 @@ class Args:
 
 
 def parse_args() -> Args:
-    """Parse command-line arguments for language, voice, and speed."""
+    """Parse command-line arguments"""
     parser = argparse.ArgumentParser(
         prog="kokorodoki",
         description="Real-time TTS with Kokoro-82M. Use !commands to adjust settings.",

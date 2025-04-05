@@ -2,6 +2,7 @@ import queue
 import sys
 import threading
 import time
+from typing import Optional
 
 import sounddevice as sd
 import soundfile as sf
@@ -33,7 +34,7 @@ class TTSPlayer:
         self.audio_queue = queue.Queue()
         self.stop_event = threading.Event()
 
-    def change_language(self, new_lang: str, device: str) -> bool:
+    def change_language(self, new_lang: str, device: Optional[str]) -> bool:
         """Change the language and reinitialize the pipeline."""
         if new_lang in self.languages:
             self.language = new_lang
