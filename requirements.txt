@@ -1,0 +1,4 @@
+kokoro==0.9.2 --index-url https://pypi.org/simple
+sounddevice==0.5.1
+soundfile==0.13.1
+rich==14.0.0
