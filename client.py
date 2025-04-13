@@ -152,7 +152,9 @@ def parse_args() -> (
     languages = get_language_map()
     voices = get_voices()
 
-    if args.language is not None and args.language not in languages:
+    if args.language is None and args.voice is not None:
+        args.language = args.voice[0]
+    elif args.language is not None and args.language not in languages:
         print(f"Error: Invalid language '{args.language}'")
         display_languages()
         sys.exit(1)

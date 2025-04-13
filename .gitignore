@@ -4,3 +4,5 @@ __pycache__
 text
 clipboard.py
 keybind
+req.txt
+systemd

@@ -1,9 +1,21 @@
 import socket
 import sys
 import threading
+import warnings
 from typing import Optional
 
-from config import HOST, MAX_SPEED, MIN_SPEED, PORT, PROMPT, REPO_ID, console
+from config import (
+    DEFAULT_LANGUAGE,
+    DEFAULT_SPEED,
+    DEFAULT_VOICE,
+    HOST,
+    MAX_SPEED,
+    MIN_SPEED,
+    PORT,
+    PROMPT,
+    REPO_ID,
+    console,
+)
 
 with console.status(
     "[yellow]Initializing Kokoro...[/]",
@@ -11,6 +23,22 @@ with console.status(
     spinner_style="yellow",
     speed=0.8,
 ):
+    # Ignoring the following warnings:
+    # 1. RNN dropout warning (UserWarning) - Expected behavior when dropout > 0 with num_layers=1
+    # 2. weight_norm deprecation (FutureWarning) - Still functional, will update when PyTorch removes it
+    # These are safe to suppress as they don't affect model behavior.
+    warnings.filterwarnings(
+        "ignore",
+        message="dropout option adds dropout after all but last recurrent layer",
+        category=UserWarning,
+        module="torch.nn.modules.rnn",
+    )
+    warnings.filterwarnings(
+        "ignore",
+        message=r"`torch\.nn\.utils\.weight_norm` is deprecated",
+        category=FutureWarning,
+        module="torch.nn.utils.weight_norm",
+    )
     from kokoro import KPipeline
 console.print("[bold green]Kokoro initialized!")
 
@@ -163,7 +191,9 @@ def run_daemon(
                             print("Exiting...")
                             sys.exit(0)
                         if cmd == "!status":
-                            status_str = format_status(player.language, player.voice, player.speed)
+                            status_str = format_status(
+                                player.language, player.voice, player.speed
+                            )
                             current_thread = threading.Thread(
                                 target=speak_thread,
                                 args=(status_str, player),
@@ -194,6 +224,18 @@ def run_daemon(
         if current_thread is not None and current_thread.is_alive():
             player.stop_playback()
             current_thread.join(timeout=1)
+        try:
+            run_noninteractive(
+                pipeline,
+                DEFAULT_LANGUAGE,
+                DEFAULT_VOICE,
+                DEFAULT_SPEED,
+                False,
+                f"Error: {str(e)[:40]}. for more info see logs. Exiting.",
+                None,
+            )
+        except Exception as e:
+            pass
 
 
 def run_with_all(
