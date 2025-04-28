@@ -1,3 +1,4 @@
+import time
 import socket
 import sys
 import threading
@@ -102,6 +103,7 @@ def start(args: Args) -> None:
                 args.verbose,
                 args.history_off,
                 args.device,
+                args.ctrl_c,
                 PROMPT,
             )
     except KeyboardInterrupt:
@@ -182,6 +184,10 @@ def run_daemon(
                         except ValueError:
                             print("Invalid speed value")
 
+                    elif cmd == "!pause":
+                        player.pause_playback()
+                    elif cmd == "!resume":
+                        player.resume_playback()
                     elif cmd in ("!stop", "!exit", "!status"):
                         if current_thread is not None and current_thread.is_alive():
                             print("Stopping previous playback...")
@@ -201,6 +207,7 @@ def run_daemon(
                             current_thread.daemon = True
                             current_thread.start()
                 else:
+                    print(f"Number of running threads: {threading.active_count()}")
                     if current_thread is not None and current_thread.is_alive():
                         print("Stopping previous playback...")
                         player.stop_playback()
@@ -210,6 +217,7 @@ def run_daemon(
                         args=(clipboard_data, player),
                     )
                     current_thread.daemon = True
+                    print(f"Number of running threads: {threading.active_count()}")
                     current_thread.start()
                     print("Started new playback thread")
 
@@ -294,11 +302,12 @@ def run_interactive(
     verbose: bool,
     history_off: bool,
     device: Optional[str],
+    ctrlc: bool,
     prompt="> ",
 ) -> None:
     """Run an interactive TTS session with dynamic settings."""
 
-    player = TTSPlayer(pipeline, language, voice, speed, verbose)
+    player = TTSPlayer(pipeline, language, voice, speed, verbose, ctrlc)
 
     console.rule("[bold green]Interactive TTS started[/]")
     display_help()
@@ -348,8 +357,14 @@ def run_interactive(
                     except ValueError:
                         console.print("[red]Invalid speed value[/]")
 
-                elif cmd == "!stop":
+                elif cmd in ("!s", "!stop"):
                     player.stop_playback()
+
+                elif cmd in ("!p", "!pause"):
+                    player.pause_playback()
+
+                elif cmd in ("!r", "!resume"):
+                    player.resume_playback()
 
                 elif cmd == "!list_langs":
                     display_languages()
@@ -381,14 +396,24 @@ def run_interactive(
 
                 continue
 
+            # Stop if previous playback still running
+            if threading.active_count() > 1:
+                player.stop_playback(False)
+            while threading.active_count() > 1:
+                time.sleep(0.1)
+
             with console.status(
-                f"[cyan]Speaking:[/] {user_input[:30]}", spinner_style="cyan"
+                f"[cyan]Speaking:[/] {user_input[:30]}...", spinner_style="cyan"
             ):
                 player.speak(user_input)
 
         except KeyboardInterrupt:
-            player.stop_playback(False)
-            console.print("\n[bold yellow]Interrupted. Type !q to exit.[/]")
+            if player.ctrlc:
+                player.stop_playback(False)
+                console.print("\n[bold yellow]Interrupted. Type !q to exit.[/]")
+            else:
+                player.print_complete = False
+                console.print("\n[bold yellow]Type !p to pause.[/]")
         except EOFError:
             console.print("\n[bold yellow]Type !q to exit.[/]")
         except Exception as e:

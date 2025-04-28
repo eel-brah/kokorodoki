@@ -32,6 +32,7 @@ class Args:
     all_voices: bool
     daemon: bool
     verbose: bool
+    ctrl_c: bool
 
 
 def parse_args() -> Args:
@@ -132,6 +133,12 @@ def parse_args() -> Args:
         action="store_true",
         help="Print what is being done",
     )
+    parser.add_argument(
+        "--ctrl_c_off",
+        "-c",
+        action="store_true",
+        help="Make Ctrl+C not end playback",
+    )
 
     args = parser.parse_args()
 
@@ -202,6 +209,7 @@ def parse_args() -> Args:
             console.print("[bold red]Error:[/] Text cannot be empty")
             sys.exit(1)
         input_text = args.text
+
     return Args(
         args.language,
         args.voice,
@@ -213,6 +221,7 @@ def parse_args() -> Args:
         args.all,
         args.daemon,
         args.verbose,
+        args.ctrl_c_off,
     )
 
 

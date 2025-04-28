@@ -2,10 +2,34 @@ import argparse
 import socket
 import subprocess
 import sys
+from enum import Enum
 from typing import Optional, Tuple
 
 from config import DEFAULT_LANGUAGE, HOST, MAX_SPEED, MIN_SPEED, PORT
 from utils import display_languages, display_voices, get_language_map, get_voices
+
+
+class Action(Enum):
+    NONE = 0
+    STOP = 1
+    PAUSE = 2
+    RESUME = 3
+    EXIT = 4
+
+
+ACTION_MAPPING = {
+    "stop": Action.STOP,
+    "pause": Action.PAUSE,
+    "resume": Action.RESUME,
+    "exit": Action.EXIT,
+}
+
+ACTION_COMMANDS = {
+    Action.EXIT: "!exit",
+    Action.STOP: "!stop",
+    Action.PAUSE: "!pause",
+    Action.RESUME: "!resume",
+}
 
 
 def get_clipboard() -> Optional[str]:
@@ -41,25 +65,11 @@ def send_clipboard() -> None:
             client_socket.sendall(clipboard_content.encode())
 
 
-def send_stop() -> None:
-    """Stop reading"""
+def send_action(action: str) -> None:
+    """Send action"""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
         client_socket.connect((HOST, PORT))
-        client_socket.sendall("!stop".encode())
-
-
-def send_status() -> None:
-    """Get current settings"""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
-        client_socket.connect((HOST, PORT))
-        client_socket.sendall("!status".encode())
-
-
-def send_exit() -> None:
-    """Exit"""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
-        client_socket.connect((HOST, PORT))
-        client_socket.sendall("!exit".encode())
+        client_socket.sendall(action.encode())
 
 
 def send_speed(speed: float) -> None:
@@ -83,19 +93,12 @@ def send_voice(voice: str) -> None:
         client_socket.sendall(f"!voice {voice}".encode())
 
 
-def parse_args() -> (
-    Tuple[bool, Optional[float], Optional[str], Optional[str], bool, bool]
-):
+def parse_args() -> Tuple[Action, Optional[float], Optional[str], Optional[str], bool]:
     """Parse command-line arguments"""
     parser = argparse.ArgumentParser(
         description="Interact with kokorodoki daemon",
     )
 
-    parser.add_argument(
-        "--stop",
-        action="store_true",
-        help="Stop reading",
-    )
     parser.add_argument(
         "--status",
         action="store_true",
@@ -134,11 +137,28 @@ def parse_args() -> (
         default=False,
         help="List available voices. Optionally provide a language to filter by.",
     )
-    parser.add_argument(
+    input_group = parser.add_mutually_exclusive_group()
+    input_group.add_argument(
+        "--stop",
+        action="store_true",
+        help="Stop reading",
+    )
+    input_group.add_argument(
+        "--pause",
+        action="store_true",
+        help="Pause reading",
+    )
+    input_group.add_argument(
+        "--resume",
+        action="store_true",
+        help="Resume reading",
+    )
+    input_group.add_argument(
         "--exit",
         action="store_true",
         help="Stop reading",
     )
+
     args = parser.parse_args()
 
     if args.list_languages:
@@ -175,25 +195,33 @@ def parse_args() -> (
         print(f"Error: Speed must be between {MIN_SPEED} and {MAX_SPEED}")
         sys.exit(1)
 
-    return (args.stop, args.speed, args.language, args.voice, args.exit, args.status)
+    action = next(
+        (ACTION_MAPPING[flag] for flag in ACTION_MAPPING if getattr(args, flag, False)),
+        Action.NONE,
+    )
+
+    return (
+        action,
+        args.speed,
+        args.language,
+        args.voice,
+        args.status,
+    )
 
 
 def send(
-    stop: bool,
+    action: Action,
     speed: Optional[float],
     language: Optional[str],
     voice: Optional[str],
-    _exit: bool,
     status: bool,
 ) -> None:
     "Send commands or clipboard."
-    if _exit:
-        send_exit()
+    if action in ACTION_COMMANDS:
+        send_action(ACTION_COMMANDS[action])
         return
 
-    if stop:
-        send_stop()
-    elif speed is None and voice is None and language is None and status is False:
+    if speed is None and voice is None and language is None and not status:
         send_clipboard()
         return
 
@@ -204,14 +232,13 @@ def send(
     if language is not None:
         send_language(language)
     if status:
-        send_status()
+        send_action("!status")
 
 
 def main():
     """Main entry point."""
-    stop, speed, language, voice, _exit, status = parse_args()
-
-    send(stop, speed, language, voice, _exit, status)
+    # action, speed, language, voice, status = parse_args()
+    send(*parse_args())
 
 
 if __name__ == "__main__":

@@ -23,7 +23,15 @@ from utils import get_language_map, get_voices
 class TTSPlayer:
     """Class to handle TTS generation and playback."""
 
-    def __init__(self, pipeline: KPipeline, language: str, voice: str, speed: float, verbose: bool):
+    def __init__(
+        self,
+        pipeline: KPipeline,
+        language: str,
+        voice: str,
+        speed: float,
+        verbose: bool,
+        ctrlc: bool = True,
+    ):
         self.pipeline = pipeline
         self.language = language
         self.voice = voice
@@ -33,6 +41,9 @@ class TTSPlayer:
         self.voices = get_voices()
         self.audio_queue = queue.Queue()
         self.stop_event = threading.Event()
+        self.audio_player = AudioPlayer(SAMPLE_RATE)
+        self.ctrlc = not ctrlc
+        self.print_complete = True
 
     def change_language(self, new_lang: str, device: Optional[str]) -> bool:
         """Change the language and reinitialize the pipeline."""
@@ -125,6 +136,7 @@ class TTSPlayer:
     def play_audio(self) -> None:
         """Play audio chunks from the queue."""
         try:
+            self.print_complete = True
             while not self.stop_event.is_set():
                 audio = self.audio_queue.get()
 
@@ -134,15 +146,16 @@ class TTSPlayer:
                 if self.verbose:
                     console.print("[dim]Playing chunk...[/dim]")
 
-                sd.play(audio, samplerate=SAMPLE_RATE)
-                while sd.get_stream().active:
-                    if self.stop_event.is_set():
-                        sd.stop()
-                        return
-                    time.sleep(0.2)
-
+                self.audio_player.play(audio)
+                if self.audio_player.stream is not None:
+                    while self.audio_player.stream.active:
+                        if self.stop_event.is_set():
+                            self.audio_player.stop()
+                            return
+                        time.sleep(0.2)
                 self.audio_queue.task_done()
-            console.print("[green]Playback complete.[/]\n")
+            if self.print_complete is True:
+                console.print("[green]Playback complete.[/]\n")
         except Exception as e:
             console.print(f"[dim]Playback thread error: {e}[/dim]")
 
@@ -156,8 +169,17 @@ class TTSPlayer:
         if printm:
             console.print("\n[yellow]Playback stopped.[/]\n")
 
+    def pause_playback(self) -> None:
+        """Pause playback."""
+        self.audio_player.pause()
+
+    def resume_playback(self) -> None:
+        """Resume playback."""
+        self.audio_player.resume()
+
     def speak(self, text: str, interactive=True) -> None:
         """Start TTS generation and playback in separate threads."""
+
         self.stop_event.clear()
 
         # Make sure the queue is empty
@@ -179,12 +201,93 @@ class TTSPlayer:
             # Wait for playback to complete
             play_thread.join()
         except KeyboardInterrupt:
-            self.stop_playback(False)
-            if interactive:
+            if interactive and self.ctrlc:
+                self.stop_playback(False)
                 console.print("\n[bold yellow]Interrupted. Type !q to exit.[/]")
+            elif interactive:
+                # self.stop_playback(False)
+                self.print_complete = False
+                console.print("\n[bold yellow]Type !p to pause.[/]")
             else:
                 console.print("\n[bold yellow]Exiting...[/]")
             gen_thread.join()
             play_thread.join()
             if not interactive:
                 sys.exit()
+
+
+class AudioPlayer:
+    def __init__(self, samplerate=SAMPLE_RATE):
+        self.samplerate = samplerate
+        self.current_frame = 0
+        self.playing = True
+        self.event = threading.Event()
+        self.lock = threading.Lock()
+        self.stream = None
+
+    def _callback(self, outdata, frames, time, status):
+        with self.lock:
+            if not self.playing:
+                outdata.fill(0)
+                return
+
+            chunksize = min(len(self.audio_data) - self.current_frame, frames)
+
+            if len(self.audio_data.shape) == 1:
+                for channel in range(outdata.shape[1]):
+                    outdata[:chunksize, channel] = self.audio_data[
+                        self.current_frame : self.current_frame + chunksize
+                    ]
+            else:
+                channels = min(self.audio_data.shape[1], outdata.shape[1])
+                outdata[:chunksize, :channels] = self.audio_data[
+                    self.current_frame : self.current_frame + chunksize, :channels
+                ]
+            if chunksize < frames:
+                outdata[chunksize:] = 0
+                raise sd.CallbackStop()
+            self.current_frame += chunksize
+
+    def play(self, audio, blocking = False) -> None:
+        """Start playback"""
+        if self.stream is not None:
+            self.stop()
+        self.audio_data = audio
+
+        def finished_callback():
+            self.event.set()
+
+        self.stream = sd.OutputStream(
+            samplerate=self.samplerate,
+            channels=1 if len(self.audio_data.shape) == 1 else self.audio_data.shape[1],
+            callback=self._callback,
+            finished_callback=finished_callback,
+        )
+        self.stream.start()
+        if blocking:
+            self.event.wait()
+            self.stop()
+
+    def resume(self) -> None:
+        """Resume playback"""
+        with self.lock:
+            if self.stream is not None:
+                self.playing = True
+
+    def pause(self) -> None:
+        """Pause playback"""
+        with self.lock:
+            if self.stream is not None:
+                self.playing = False
+
+    def stop(self) -> None:
+        """stop playback"""
+        with self.lock:
+            self.playing = False
+            self.current_frame = 0
+        if self.stream is not None:
+            self.stream.stop(True)
+            self.stream.close(True)
+            self.stream = None
+            self.playing = True
+            self.event.clear()
