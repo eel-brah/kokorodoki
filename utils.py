@@ -1,7 +1,9 @@
 import os
+import re
 import readline
 from typing import Dict, List, Optional
 
+from nltk import sent_tokenize
 from rich import box
 from rich.table import Table
 
@@ -81,6 +83,52 @@ def get_voices() -> List[str]:
         "zm_yunxia",
         "zm_yunyang",
     ]
+
+
+def get_gui_themes() -> Dict[int, str]:
+    """Return the available gui themes"""
+    return {
+        1: "darkly",
+        2: "cyborg",
+        3: "solar",
+        4: "vapor",
+    }
+
+
+def display_themes() -> None:
+    """Display available gui themes"""
+    themes = get_gui_themes()
+    table = Table(title="Available Themes", box=box.ROUNDED)
+    table.add_column("Number", style="cyan")
+    table.add_column("Theme", style="green")
+
+    for number, name in themes.items():
+        table.add_row(str(number), name)
+
+    console.print(table)
+
+
+def get_nltk_language_map() -> Dict[str, str]:
+    """Return available languages in nltk"""
+    return {
+        "a": "english",
+        "b": "english",
+        "e": "spanish",
+        "f": "french",
+        "i": "italian",
+        "p": "portuguese",
+    }
+
+
+def get_nltk_language(language_code: str) -> str:
+    return next(
+        (
+            lang
+            for code, lang in get_nltk_language_map().items()
+            if code == language_code
+        ),
+        "english",
+    )
 
 
 def display_languages() -> None:
@@ -209,3 +257,107 @@ def completer(text: str, state: int) -> Optional[str]:
     """Auto-complete function for readline."""
     options = [cmd for cmd in COMMANDS if cmd.startswith(text)]
     return options[state] if state < len(options) else None
+
+
+def split_by_words(chunk: str, max_len: int) -> List[str]:
+    """Split a chunk into smaller chunks by words, ensuring each is <= max_len"""
+
+    if len(chunk) <= max_len:
+        return [chunk]
+
+    chunks = []
+    current_chunk = ""
+
+    words = chunk.split(" ")
+    for word in words:
+        if len(current_chunk) + len(word) + (1 if current_chunk else 0) > max_len:
+            if current_chunk:
+                chunks.append(current_chunk)
+                current_chunk = word
+            else:
+                # If word itself is too long
+                while len(word) > max_len:
+                    chunks.append(word[:max_len])
+                    word = word[max_len:]
+                current_chunk = word
+        else:
+            current_chunk += (" " if current_chunk else "") + word
+    if current_chunk:
+        chunks.append(current_chunk)
+
+    return chunks
+
+
+def split_long_sentence(sentence: str, max_len=350, min_len=50) -> List[str]:
+    """Split a sentence into chunks of <= max_len"""
+    if len(sentence) <= max_len:
+        return [sentence]
+
+    chunks = []
+
+    # Split by newline
+    newline_chunks = sentence.split("\n")
+    for chunk in newline_chunks:
+        if len(chunk) <= max_len:
+            chunks.append(chunk)
+        else:
+            # Split by "[,;]\s"
+            split_points = [m.start() for m in re.finditer(r"[,;]\s", chunk)]
+            if split_points:
+                last_pos = 0
+                for pos in split_points:
+                    next_pos = pos + 2
+                    segment = chunk[last_pos:next_pos]
+                    if len(segment) > max_len:
+                        # For too long segments
+                        chunks.extend(split_by_words(segment, max_len))
+                    elif len(segment) < min_len and last_pos > 0:
+                        # Merge short segment with previous chunk
+                        chunks[-1] += segment
+                    else:
+                        chunks.append(segment)
+                    last_pos = next_pos
+                # Handle remaining text
+                if last_pos < len(chunk):
+                    chunks.extend(split_by_words(chunk[last_pos:], max_len))
+            else:
+                chunks.extend(split_by_words(chunk, max_len))
+
+    for i, chunk in enumerate(chunks):
+        if len(chunk) > max_len:
+            chunks[i : i + 1] = split_by_words(chunk, max_len)
+    return [chunk for chunk in chunks if chunk]
+
+def merge_short_sentences(sentences: list[str], min_len=100, max_len=350) -> list[str]:
+    """Merge those shorter than min_len with the next sentence"""
+    if not sentences:
+        return []
+
+    result = []
+    current_sentence = sentences[0]
+
+    for i in range(1, len(sentences)):
+        if len(current_sentence) < min_len and len(sentences[i]) < max_len:
+            current_sentence += " " + sentences[i]
+        else:
+            result.append(current_sentence)
+            current_sentence = sentences[i]
+
+    if current_sentence:
+        result.append(current_sentence)
+
+    return result
+
+def split_text_to_sentences(text: str, language: str) -> List[str]:
+    """Tokenize text into sentences"""
+    sentences = sent_tokenize(text, language=language)
+
+    new_sentences = []
+    for sentence in sentences:
+        if len(sentence) > 350:
+            new_sentences.extend(split_long_sentence(sentence, max_len=350))
+        else:
+            new_sentences.append(sentence)
+
+    # new_sentences = merge_short_sentences(new_sentences, min_len=100, max_len=350)
+    return new_sentences

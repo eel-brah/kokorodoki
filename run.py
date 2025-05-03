@@ -1,9 +1,10 @@
-import time
 import socket
 import sys
 import threading
+import time
 import warnings
 from typing import Optional
+import nltk
 
 from config import (
     DEFAULT_LANGUAGE,
@@ -54,6 +55,7 @@ from utils import (
     format_status,
     get_language_map,
     get_voices,
+    split_text_to_sentences,
 )
 
 
@@ -72,6 +74,21 @@ def start(args: Args) -> None:
             )
         console.print("[bold green]Kokoro pipeline initialized!")
 
+        # Download nltk tokenizers if not found
+        try:
+            nltk.data.find("tokenizers/punkt")
+            nltk.data.find("tokenizers/punkt_tab")
+        except LookupError:
+            with console.status(
+                "[yellow]Download nltk tokenizers...[/]",
+                spinner="dots",
+                spinner_style="yellow",
+                speed=0.8,
+            ):
+                nltk.download("punkt", quiet=True)
+                nltk.download("punkt_tab", quiet=True)
+            console.print("[bold green]Downloading nltk tokenizers finished!")
+
         if args.daemon:
             run_daemon(
                 pipeline,
@@ -79,6 +96,16 @@ def start(args: Args) -> None:
                 args.voice,
                 args.speed,
                 args.verbose,
+            )
+        elif args.gui:
+            from gui import run_gui
+            run_gui(
+                pipeline,
+                args.language,
+                args.voice,
+                args.speed,
+                args.device,
+                args.theme,
             )
         elif args.all_voices and args.input_text:
             run_with_all(
@@ -112,6 +139,8 @@ def start(args: Args) -> None:
         console.print("\n")
     except Exception as e:
         console.print(f"[bold red]Error:[/] {str(e)}")
+
+
 
 
 def speak_thread(clipboard_data, player):
@@ -188,6 +217,10 @@ def run_daemon(
                         player.pause_playback()
                     elif cmd == "!resume":
                         player.resume_playback()
+                    elif cmd == "!back":
+                        player.back_sentence()
+                    elif cmd == "!next":
+                        player.skip_sentence()
                     elif cmd in ("!stop", "!exit", "!status"):
                         if current_thread is not None and current_thread.is_alive():
                             print("Stopping previous playback...")
@@ -207,17 +240,16 @@ def run_daemon(
                             current_thread.daemon = True
                             current_thread.start()
                 else:
-                    print(f"Number of running threads: {threading.active_count()}")
                     if current_thread is not None and current_thread.is_alive():
                         print("Stopping previous playback...")
                         player.stop_playback()
                         current_thread.join()
+                    sentences = split_text_to_sentences(clipboard_data, player.nltk_language)
                     current_thread = threading.Thread(
                         target=speak_thread,
-                        args=(clipboard_data, player),
+                        args=(sentences, player),
                     )
                     current_thread.daemon = True
-                    print(f"Number of running threads: {threading.active_count()}")
                     current_thread.start()
                     print("Started new playback thread")
 
@@ -402,10 +434,11 @@ def run_interactive(
             while threading.active_count() > 1:
                 time.sleep(0.1)
 
+            sentences = split_text_to_sentences(user_input, player.nltk_language)
             with console.status(
                 f"[cyan]Speaking:[/] {user_input[:30]}...", spinner_style="cyan"
             ):
-                player.speak(user_input)
+                player.speak(sentences)
 
         except KeyboardInterrupt:
             if player.ctrlc:

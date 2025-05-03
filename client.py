@@ -14,13 +14,17 @@ class Action(Enum):
     STOP = 1
     PAUSE = 2
     RESUME = 3
-    EXIT = 4
+    NEXT = 4
+    BACK = 5
+    EXIT = 6
 
 
 ACTION_MAPPING = {
     "stop": Action.STOP,
     "pause": Action.PAUSE,
     "resume": Action.RESUME,
+    "next": Action.NEXT,
+    "back": Action.BACK,
     "exit": Action.EXIT,
 }
 
@@ -29,6 +33,8 @@ ACTION_COMMANDS = {
     Action.STOP: "!stop",
     Action.PAUSE: "!pause",
     Action.RESUME: "!resume",
+    Action.NEXT: "!next",
+    Action.BACK: "!back",
 }
 
 
@@ -152,6 +158,16 @@ def parse_args() -> Tuple[Action, Optional[float], Optional[str], Optional[str],
         "--resume",
         action="store_true",
         help="Resume reading",
+    )
+    input_group.add_argument(
+        "--next",
+        action="store_true",
+        help="Skip a sentence",
+    )
+    input_group.add_argument(
+        "--back",
+        action="store_true",
+        help="Back one sentence",
     )
     input_group.add_argument(
         "--exit",

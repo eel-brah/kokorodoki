@@ -26,6 +26,9 @@ COMMANDS = [
 ]
 HOST = "0.0.0.0" 
 PORT = 5561     
-
+TITLE="KokoroDoki"
+WINDOW_SIZE="700x600"
+VERSION="v0.1.0"
+DEFAULT_THEME=1
 
 console = Console()

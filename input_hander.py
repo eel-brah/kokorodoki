@@ -6,6 +6,7 @@ from typing import Optional
 from config import (
     DEFAULT_LANGUAGE,
     DEFAULT_SPEED,
+    DEFAULT_THEME,
     DEFAULT_VOICE,
     MAX_SPEED,
     MIN_SPEED,
@@ -13,7 +14,9 @@ from config import (
 )
 from utils import (
     display_languages,
+    display_themes,
     display_voices,
+    get_gui_themes,
     get_language_map,
     get_voices,
     save_history,
@@ -31,6 +34,8 @@ class Args:
     output_file: Optional[str]
     all_voices: bool
     daemon: bool
+    gui: bool
+    theme: int
     verbose: bool
     ctrl_c: bool
 
@@ -125,7 +130,24 @@ def parse_args() -> Args:
     parser.add_argument(
         "--daemon",
         action="store_true",
-        help="daemon mode",
+        help="Daemon mode",
+    )
+    parser.add_argument(
+        "--gui",
+        "-g",
+        action="store_true",
+        help="Gui mode",
+    )
+    parser.add_argument(
+        "--themes",
+        action="store_true",
+        help="Show the available gui themes",
+    )
+    parser.add_argument(
+        "--theme",
+        type=int,
+        default=DEFAULT_THEME,
+        help=f"Choose a theme number (default: {get_gui_themes()[DEFAULT_THEME]}, use --themes to get list of themes)",
     )
     parser.add_argument(
         "--verbose",
@@ -149,6 +171,10 @@ def parse_args() -> Args:
 
     if args.list_voices is not False:
         display_voices(args.list_voices)
+        sys.exit(0)
+
+    if args.themes:
+        display_themes()
         sys.exit(0)
 
     # Validate inputs
@@ -177,6 +203,11 @@ def parse_args() -> Args:
         )
         sys.exit(1)
 
+    if args.theme not in get_gui_themes():
+        console.print("[bold red]Error:[/] Invalid theme")
+        display_themes()
+        sys.exit(1)
+
     if args.output is not None and not args.output.endswith(".wav"):
         console.print("[bold red]Error:[/] The output file name should end with .wav")
         sys.exit(1)
@@ -186,10 +217,14 @@ def parse_args() -> Args:
         console.print("[bold red]Error:[/] --output/-o can't be used with --all")
         sys.exit(1)
     if args.output is not None and args.text is None and args.file is None:
-        console.print("[bold red]Error:[/] --output/-o can only be used with --text or --file")
+        console.print(
+            "[bold red]Error:[/] --output/-o can only be used with --text or --file"
+        )
         sys.exit(1)
     if args.all and args.text is None and args.file is None:
-        console.print("[bold red]Error:[/] --all can only be used with --text or --file")
+        console.print(
+            "[bold red]Error:[/] --all can only be used with --text or --file"
+        )
         sys.exit(1)
 
     # Handle input text/file
@@ -220,6 +255,8 @@ def parse_args() -> Args:
         args.output,
         args.all,
         args.daemon,
+        args.gui,
+        args.theme,
         args.verbose,
         args.ctrl_c_off,
     )

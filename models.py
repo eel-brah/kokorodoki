@@ -2,7 +2,7 @@ import queue
 import sys
 import threading
 import time
-from typing import Optional
+from typing import Optional, Union
 
 import sounddevice as sd
 import soundfile as sf
@@ -17,7 +17,7 @@ from rich.progress import (
 )
 
 from config import MAX_SPEED, MIN_SPEED, REPO_ID, SAMPLE_RATE, console
-from utils import get_language_map, get_voices
+from utils import get_language_map, get_nltk_language, get_voices
 
 
 class TTSPlayer:
@@ -34,6 +34,7 @@ class TTSPlayer:
     ):
         self.pipeline = pipeline
         self.language = language
+        self.nltk_language = get_nltk_language(self.language)
         self.voice = voice
         self.speed = speed
         self.verbose = verbose
@@ -41,6 +42,10 @@ class TTSPlayer:
         self.voices = get_voices()
         self.audio_queue = queue.Queue()
         self.stop_event = threading.Event()
+        self.skip = threading.Event()
+        self.back = threading.Event()
+        self.lock = threading.Lock()
+        self.back_number = 0
         self.audio_player = AudioPlayer(SAMPLE_RATE)
         self.ctrlc = not ctrlc
         self.print_complete = True
@@ -52,6 +57,8 @@ class TTSPlayer:
             self.pipeline = KPipeline(
                 lang_code=self.language, repo_id=REPO_ID, device=device
             )
+            self.change_voice(next(voice for voice in get_voices() if voice.startswith(new_lang)))
+            self.nltk_language = get_nltk_language(self.language)
             return True
         return False
 
@@ -69,22 +76,26 @@ class TTSPlayer:
             return True
         return False
 
-    def generate_audio(self, text: str) -> None:
+    def generate_audio(self, text: Union[str, list]) -> None:
         """Generate audio chunks and put them in the queue."""
         try:
-            generator = self.pipeline(
-                text, voice=self.voice, speed=self.speed, split_pattern=None
-            )
+            sentences = [text] if isinstance(text, str) else text
+            for sentence in sentences:
+                generator = self.pipeline(
+                    sentence, voice=self.voice, speed=self.speed, split_pattern=None
+                )
 
-            for result in generator:
-                if self.stop_event.is_set():
-                    break
+                for result in generator:
+                    if self.stop_event.is_set():
+                        break
 
-                if result.audio is not None:
-                    audio = result.audio.numpy()
-                    if self.verbose:
-                        console.print(f"[dim]Generated: {result.graphemes[:30]}...[/]")
-                    self.audio_queue.put(audio)
+                    if result.audio is not None:
+                        audio = result.audio.numpy()
+                        if self.verbose:
+                            console.print(
+                                f"[dim]Generated: {result.graphemes[:30]}...[/]"
+                            )
+                        self.audio_queue.put(audio)
 
             self.audio_queue.put(None)  # Signal end of generation
         except Exception as e:
@@ -133,31 +144,73 @@ class TTSPlayer:
         except Exception as e:
             console.print(f"[bold red]Generation error:[/] {str(e)}")
 
-    def play_audio(self) -> None:
+    def play_audio(self, gui_highlight=None) -> None:
         """Play audio chunks from the queue."""
         try:
+            audio_chunks = []
+            audio_size = 0
+            self.back_number = 0
             self.print_complete = True
+            start = time.time()
             while not self.stop_event.is_set():
-                audio = self.audio_queue.get()
+                print(f"A - {time.time() - start}")
+                start = time.time()
+                self.skip.clear()
+                self.back.clear()
+                with self.lock:
+                    back_number = self.back_number = min(self.back_number, audio_size)
+                if back_number > 0 and audio_size > 0:
+                    audio = audio_chunks[audio_size - back_number]
+                else:
+                    audio = self.audio_queue.get()
+                    if audio is None:
+                        break
 
-                if audio is None:
-                    break
+                    audio_chunks.append(audio)
+                    audio_size += 1
 
                 if self.verbose:
                     console.print("[dim]Playing chunk...[/dim]")
 
+                # time.sleep(2)
+                print(f"B - {time.time() - start}")
+                start = time.time()
                 self.audio_player.play(audio)
+                if gui_highlight is not None:
+                    gui_highlight.queue.put(
+                        (gui_highlight.highlight, (audio_size - (back_number or 1),))
+                    )
                 if self.audio_player.stream is not None:
                     while self.audio_player.stream.active:
                         if self.stop_event.is_set():
                             self.audio_player.stop()
                             return
+                        elif self.skip.is_set():
+                            break
+                        elif self.back.is_set():
+                            break
                         time.sleep(0.2)
-                self.audio_queue.task_done()
+                print(f"E - {time.time() - start}")
+                start = time.time()
+                with self.lock:
+                    if not self.back.is_set() and self.back_number > 0:
+                        self.back_number -= 1
+                    if self.back_number == 0:
+                        self.audio_queue.task_done()
+            if gui_highlight is not None:
+                gui_highlight.queue.put(gui_highlight.remove_highlight)
+            self.audio_player.stop()
             if self.print_complete is True:
                 console.print("[green]Playback complete.[/]\n")
         except Exception as e:
             console.print(f"[dim]Playback thread error: {e}[/dim]")
+
+    def skip_sentence(self) -> None:
+        self.skip.set()
+
+    def back_sentence(self) -> None:
+        self.back_number += 1
+        self.back.set()
 
     def stop_playback(self, printm=True) -> None:
         """Stop ongoing generation and playback."""
@@ -177,7 +230,9 @@ class TTSPlayer:
         """Resume playback."""
         self.audio_player.resume()
 
-    def speak(self, text: str, interactive=True) -> None:
+    def speak(
+        self, text: Union[str, list], interactive=True, gui_highlight=None
+    ) -> None:
         """Start TTS generation and playback in separate threads."""
 
         self.stop_event.clear()
@@ -189,7 +244,9 @@ class TTSPlayer:
         gen_thread = threading.Thread(
             target=self.generate_audio, args=(text,), daemon=True
         )
-        play_thread = threading.Thread(target=self.play_audio, daemon=True)
+        play_thread = threading.Thread(
+            target=self.play_audio, args=(gui_highlight,), daemon=True
+        )
 
         try:
             # Start generation thread
@@ -248,7 +305,7 @@ class AudioPlayer:
                 raise sd.CallbackStop()
             self.current_frame += chunksize
 
-    def play(self, audio, blocking = False) -> None:
+    def play(self, audio, blocking=False) -> None:
         """Start playback"""
         if self.stream is not None:
             self.stop()
