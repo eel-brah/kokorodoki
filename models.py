@@ -4,6 +4,8 @@ import threading
 import time
 from typing import Optional, Union
 
+import librosa
+import numpy as np
 import sounddevice as sd
 import soundfile as sf
 import torch
@@ -57,7 +59,9 @@ class TTSPlayer:
             self.pipeline = KPipeline(
                 lang_code=self.language, repo_id=REPO_ID, device=device
             )
-            self.change_voice(next(voice for voice in get_voices() if voice.startswith(new_lang)))
+            self.change_voice(
+                next(voice for voice in get_voices() if voice.startswith(new_lang))
+            )
             self.nltk_language = get_nltk_language(self.language)
             return True
         return False
@@ -75,6 +79,21 @@ class TTSPlayer:
             self.speed = new_speed
             return True
         return False
+
+    def trim_silence(self, audio, threshold=0.003):
+        """Trim silence from the beginning and end of an audio chunk."""
+        # Convert to absolute values to handle negative amplitudes
+        abs_audio = np.abs(audio)
+        # Find indices where amplitude exceeds threshold
+        non_silent = np.where(abs_audio > threshold)[0]
+
+        if len(non_silent) == 0:
+            return audio
+
+        # Trim the audio
+        start_idx = non_silent[0]
+        end_idx = non_silent[-1] + 1
+        return audio[start_idx:end_idx]
 
     def generate_audio(self, text: Union[str, list]) -> None:
         """Generate audio chunks and put them in the queue."""
@@ -95,7 +114,10 @@ class TTSPlayer:
                             console.print(
                                 f"[dim]Generated: {result.graphemes[:30]}...[/]"
                             )
-                        self.audio_queue.put(audio)
+                        # Trim silence for smooth reading
+                        trimed_audio, _ = librosa.effects.trim(audio, top_db=50)
+                        # trimed_audio = self.trim_silence(audio, threshold=0.001)
+                        self.audio_queue.put(trimed_audio)
 
             self.audio_queue.put(None)  # Signal end of generation
         except Exception as e:
@@ -151,10 +173,7 @@ class TTSPlayer:
             audio_size = 0
             self.back_number = 0
             self.print_complete = True
-            start = time.time()
             while not self.stop_event.is_set():
-                print(f"A - {time.time() - start}")
-                start = time.time()
                 self.skip.clear()
                 self.back.clear()
                 with self.lock:
@@ -172,9 +191,6 @@ class TTSPlayer:
                 if self.verbose:
                     console.print("[dim]Playing chunk...[/dim]")
 
-                # time.sleep(2)
-                print(f"B - {time.time() - start}")
-                start = time.time()
                 self.audio_player.play(audio)
                 if gui_highlight is not None:
                     gui_highlight.queue.put(
@@ -190,8 +206,7 @@ class TTSPlayer:
                         elif self.back.is_set():
                             break
                         time.sleep(0.2)
-                print(f"E - {time.time() - start}")
-                start = time.time()
+
                 with self.lock:
                     if not self.back.is_set() and self.back_number > 0:
                         self.back_number -= 1

@@ -4,6 +4,7 @@ import threading
 import time
 import warnings
 from typing import Optional
+
 import nltk
 
 from config import (
@@ -95,10 +96,12 @@ def start(args: Args) -> None:
                 args.language,
                 args.voice,
                 args.speed,
+                args.device,
                 args.verbose,
             )
         elif args.gui:
             from gui import run_gui
+
             run_gui(
                 pipeline,
                 args.language,
@@ -141,9 +144,8 @@ def start(args: Args) -> None:
         console.print(f"[bold red]Error:[/] {str(e)}")
 
 
-
-
-def speak_thread(clipboard_data, player):
+def speak_thread(clipboard_data: str, player: TTSPlayer) -> None:
+    """Player speak wrapper"""
     try:
         player.speak(clipboard_data, interactive=False)
     except Exception as e:
@@ -155,6 +157,7 @@ def run_daemon(
     language: str,
     voice: str,
     speed: float,
+    device: Optional[str],
     verbose: bool,
 ) -> None:
     """Start daemon mode"""
@@ -190,7 +193,7 @@ def run_daemon(
                     arg = parts[1] if len(parts) > 1 else ""
 
                     if cmd == "!lang":
-                        if player.change_language(arg, None):
+                        if player.change_language(arg, device):
                             print(f"Language changed to: {player.languages[arg]}")
                         else:
                             print("Invalid language code.")
@@ -244,7 +247,9 @@ def run_daemon(
                         print("Stopping previous playback...")
                         player.stop_playback()
                         current_thread.join()
-                    sentences = split_text_to_sentences(clipboard_data, player.nltk_language)
+                    sentences = split_text_to_sentences(
+                        clipboard_data, player.nltk_language
+                    )
                     current_thread = threading.Thread(
                         target=speak_thread,
                         args=(sentences, player),
@@ -398,10 +403,19 @@ def run_interactive(
                 elif cmd in ("!r", "!resume"):
                     player.resume_playback()
 
+                elif cmd in ("!b", "!back"):
+                    player.back_sentence()
+
+                elif cmd in ("!n", "!next"):
+                    player.skip_sentence()
+
                 elif cmd == "!list_langs":
                     display_languages()
 
                 elif cmd == "!list_voices":
+                    display_voices(player.language)
+
+                elif cmd == "!list_all_voices":
                     display_voices()
 
                 elif cmd in ("!help", "!h"):

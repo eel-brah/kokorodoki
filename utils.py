@@ -195,27 +195,76 @@ def format_status(language: str, voice: str, speed: float) -> str:
 
 
 def display_help() -> None:
-    """Display help information."""
-    table = Table(title="Available Commands", box=box.ROUNDED)
-    table.add_column("Command", style="cyan")
+    """Display help information for available commands."""
+    table = Table(
+        title="[bold]Command Help[/bold]",
+        box=box.ROUNDED,
+        title_style="bold magenta",
+        header_style="bold white",
+    )
+    table.add_column("Command", style="cyan", width=20)
     table.add_column("Description", style="green")
+    table.add_column("Example", style="yellow")
 
-    table.add_row("!lang <code>", "Change language (e.g., !lang b)")
-    table.add_row("!voice <name>", "Change voice (e.g., !voice af_bella)")
-    table.add_row("!speed <value>", "Change speed (e.g., !speed 1.5)")
-    table.add_row("!stop or !s", "Stop current playback")
-    table.add_row("!pause or !p", "Pause playback")
-    table.add_row("!resume or !r", "Resume playback")
-    table.add_row("!list_langs", "List available languages")
-    table.add_row("!list_voices", "List available voices")
-    table.add_row("!status", "Show current settings")
-    table.add_row("!clear", "Clear screen")
-    table.add_row("!clear_history", "Clear history")
-    table.add_row("!verbose", "Enable or Disable printing of what is being done")
-    table.add_row("!help or !h", "Show this help message")
-    table.add_row("!quit or !q", "Exit the program")
+    command_groups = [
+        {
+            "group": "Playback Control",
+            "commands": [
+                ("!stop, !s", "Stop current playback", "!stop"),
+                ("!pause, !p", "Pause playback", "!pause"),
+                ("!resume, !r", "Resume playback", "!resume"),
+                ("!next, !n", "Skip to next sentence", "!next"),
+                ("!back, !b", "Go to previous sentence", "!back"),
+            ],
+        },
+        {
+            "group": "Audio Settings",
+            "commands": [
+                ("!lang <code>", "Change language", "!lang b"),
+                ("!voice <name>", "Change voice", "!voice af_bella"),
+                ("!speed <value>", "Set playback speed (0.5-2.0)", "!speed 1.5"),
+            ],
+        },
+        {
+            "group": "Information",
+            "commands": [
+                ("!list_langs", "List available languages", "!list_langs"),
+                (
+                    "!list_voices",
+                    "List available voices for current language",
+                    "!list_voices",
+                ),
+                (
+                    "!list_all_voices",
+                    "List voices for all languages",
+                    "!list_all_voices",
+                ),
+                ("!status", "Show current settings", "!status"),
+            ],
+        },
+        {
+            "group": "Interface",
+            "commands": [
+                ("!clear", "Clear the screen", "!clear"),
+                ("!clear_history", "Clear command history", "!clear_history"),
+                ("!verbose", "Toggle verbose mode", "!verbose"),
+                ("!help, !h", "Show this help message", "!help"),
+                ("!quit, !q", "Exit the program", "!quit"),
+            ],
+        },
+    ]
+
+    for group in command_groups:
+        table.add_row(
+            f"[bold underline]{group['group']}[/]", "", "", style="bold green"
+        )
+        for cmd, desc, example in group["commands"]:
+            table.add_row(cmd, desc, example)
 
     console.print(table)
+    console.print(
+        "[italic dim]Tip: Use commands with aliases (e.g., !s for !stop) for faster input.[/]\n"
+    )
 
 
 def clear_history() -> None:
@@ -328,7 +377,8 @@ def split_long_sentence(sentence: str, max_len=350, min_len=50) -> List[str]:
             chunks[i : i + 1] = split_by_words(chunk, max_len)
     return [chunk for chunk in chunks if chunk]
 
-def merge_short_sentences(sentences: list[str], min_len=100, max_len=350) -> list[str]:
+
+def merge_short_sentences(sentences: list[str], min_len=50, max_len=300) -> list[str]:
     """Merge those shorter than min_len with the next sentence"""
     if not sentences:
         return []
@@ -338,7 +388,7 @@ def merge_short_sentences(sentences: list[str], min_len=100, max_len=350) -> lis
 
     for i in range(1, len(sentences)):
         if len(current_sentence) < min_len and len(sentences[i]) < max_len:
-            current_sentence += " " + sentences[i]
+            current_sentence += sentences[i]
         else:
             result.append(current_sentence)
             current_sentence = sentences[i]
@@ -347,6 +397,7 @@ def merge_short_sentences(sentences: list[str], min_len=100, max_len=350) -> lis
         result.append(current_sentence)
 
     return result
+
 
 def split_text_to_sentences(text: str, language: str) -> List[str]:
     """Tokenize text into sentences"""
@@ -359,5 +410,5 @@ def split_text_to_sentences(text: str, language: str) -> List[str]:
         else:
             new_sentences.append(sentence)
 
-    # new_sentences = merge_short_sentences(new_sentences, min_len=100, max_len=350)
+    # new_sentences = merge_short_sentences(new_sentences, min_len=50, max_len=300)
     return new_sentences
