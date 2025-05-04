@@ -248,6 +248,7 @@ def display_help() -> None:
                 ("!clear", "Clear the screen", "!clear"),
                 ("!clear_history", "Clear command history", "!clear_history"),
                 ("!verbose", "Toggle verbose mode", "!verbose"),
+                ("!ctrlc", "Change the effect of Ctrl+C", "!ctrlc"),
                 ("!help, !h", "Show this help message", "!help"),
                 ("!quit, !q", "Exit the program", "!quit"),
             ],

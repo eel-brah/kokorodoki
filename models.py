@@ -106,7 +106,8 @@ class TTSPlayer:
 
                 for result in generator:
                     if self.stop_event.is_set():
-                        break
+                        self.audio_queue.put(None)
+                        return
 
                     if result.audio is not None:
                         audio = result.audio.numpy()
@@ -124,7 +125,7 @@ class TTSPlayer:
             console.print(f"[bold red]Generation error:[/] {str(e)}")
             self.audio_queue.put(None)  # Ensure playback thread exits
 
-    def generate_audio_file(self, text: str, output_file="Output.wav") -> None:
+    def generate_audio_file(self, text: list | str, output_file="Output.wav") -> None:
         """Generate audio file"""
         try:
             with Progress(
@@ -139,13 +140,15 @@ class TTSPlayer:
                     total=None,
                 )
 
-                generator = self.pipeline(
-                    text, voice=self.voice, speed=self.speed, split_pattern=None
-                )
-
+                sentences = [text] if isinstance(text, str) else text
                 audio_chunks = []
-                for result in generator:
-                    audio_chunks.append(result.audio)
+                for sentence in sentences:
+                    generator = self.pipeline(
+                        sentence, voice=self.voice, speed=self.speed, split_pattern=None
+                    )
+
+                    for result in generator:
+                        audio_chunks.append(result.audio)
 
                 # Concatenate all audio chunks
                 full_audio = torch.cat(audio_chunks, dim=0)
@@ -201,10 +204,10 @@ class TTSPlayer:
                         self.audio_player.stop()
                         return
                     elif self.skip.is_set():
-                        self.audio_player.stop()  # Clear current audio
+                        self.audio_player.stop()
                         break
                     elif self.back.is_set():
-                        self.audio_player.stop()  # Clear current audio
+                        self.audio_player.stop()
                         break
                     time.sleep(0.2)
 
@@ -273,19 +276,22 @@ class TTSPlayer:
 
             # Wait for playback to complete
             play_thread.join()
+            gen_thread.join()
         except KeyboardInterrupt:
             if console_mode and self.ctrlc:
                 self.stop_playback(False)
                 console.print("\n[bold yellow]Interrupted. Type !q to exit.[/]")
+                gen_thread.join()
+                play_thread.join()
             elif console_mode:
                 # self.stop_playback(False)
                 self.print_complete = False
                 console.print("\n[bold yellow]Type !p to pause.[/]")
             else:
                 console.print("\n[bold yellow]Exiting...[/]")
-            gen_thread.join()
-            play_thread.join()
-            if not console_mode:
+                self.stop_playback(False)
+                gen_thread.join()
+                play_thread.join()
                 sys.exit()
 
 

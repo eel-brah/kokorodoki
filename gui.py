@@ -523,12 +523,19 @@ class Gui:
         )
         max_label.grid(row=0, column=2, sticky="e")
 
+    def close(self):
+        if self.current_thread is not None and self.current_thread.is_alive():
+            self.player.stop_playback()
+            self.current_thread.join()
 
-def setup_signal_handler(root):
+
+
+def setup_signal_handler(root, app):
     """Set up a signal handler for SIGINT (Ctrl+C) to close the Tkinter window."""
 
     def signal_handler(sig, frame):
         print("\nClosing...")
+        app.close()
         root.after(0, root.destroy)
 
     signal.signal(signal.SIGINT, signal_handler)
@@ -555,11 +562,13 @@ def run_gui(
 
         def on_closing():
             if messagebox.askokcancel("Quit", "Do you want to quit?"):
+                print("Exiting...")
+                app.close()
                 root.destroy()
 
         root.protocol("WM_DELETE_WINDOW", on_closing)
 
-        setup_signal_handler(root)
+        setup_signal_handler(root, app)
 
         root.mainloop()
 

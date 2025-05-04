@@ -239,6 +239,10 @@ def run_daemon(
                             current_thread.join()
                         if cmd == "!exit":
                             print("Exiting...")
+                            if current_thread is not None and current_thread.is_alive():
+                                print("Stopping previous playback...")
+                                player.stop_playback()
+                                current_thread.join()
                             sys.exit(0)
                         if cmd == "!status":
                             status_str = format_status(
@@ -317,13 +321,18 @@ def run_with_all(
     target_voices = [voice for voice in get_voices() if voice.startswith(language)]
 
     player = TTSPlayer(pipeline, language, target_voices[0], speed, verbose)
+    sentences = split_text_to_sentences(input_text, player.nltk_language)
     try:
         for voice in target_voices:
             player.change_voice(voice)
             console.print(f"[cyan]{voice} speaking:[/] {input_text[:30]}")
-            player.speak(input_text, console_mode=False)
+            player.speak(sentences, console_mode=False)
     except KeyboardInterrupt:
         console.print("[bold yellow]Exiting...[/]")
+        if threading.active_count() > 1:
+            player.stop_playback(False)
+            while threading.active_count() > 1:
+                time.sleep(0.1)
         sys.exit()
 
 
@@ -338,17 +347,22 @@ def run_cli(
 ) -> None:
     """Generate audio"""
     player = TTSPlayer(pipeline, language, voice, speed, verbose)
+    sentences = split_text_to_sentences(input_text, player.nltk_language)
     if output_file is None:
         try:
             with console.status(
-                f"[cyan]Speaking:[/] {input_text[:30]}", spinner_style="cyan"
+                f"[cyan]Speaking:[/] {input_text[:30]}...", spinner_style="cyan"
             ):
-                player.speak(input_text, console_mode=False)
+                player.speak(sentences, console_mode=False)
         except KeyboardInterrupt:
             console.print("[bold yellow]Exiting...[/]")
+            if threading.active_count() > 1:
+                player.stop_playback(False)
+                while threading.active_count() > 1:
+                    time.sleep(0.1)
             sys.exit()
     else:
-        player.generate_audio_file(input_text, output_file=output_file)
+        player.generate_audio_file(sentences, output_file=output_file)
 
 
 def run_console(
@@ -443,6 +457,10 @@ def run_console(
 
                 elif cmd in ("!quit", "!q"):
                     console.print("[bold yellow]Exiting...[/]")
+                    if threading.active_count() > 1:
+                        player.stop_playback(False)
+                        while threading.active_count() > 1:
+                            time.sleep(0.1)
                     break
 
                 elif cmd == "!clear":
@@ -450,6 +468,13 @@ def run_console(
 
                 elif cmd == "!clear_history":
                     clear_history()
+
+                elif cmd == "!ctrlc":
+                    player.ctrlc = not player.ctrlc
+                    if player.ctrlc:
+                        console.print("[green]Ctrl+C ends the playback")
+                    else:
+                        console.print("[green]Ctrl+C gives a new line")
 
                 elif cmd in ("!status", "!h"):
                     display_status(player.language, player.voice, player.speed)
@@ -465,8 +490,8 @@ def run_console(
             # Stop if previous playback still running
             if threading.active_count() > 1:
                 player.stop_playback(False)
-            while threading.active_count() > 1:
-                time.sleep(0.1)
+                while threading.active_count() > 1:
+                    time.sleep(0.1)
 
             sentences = split_text_to_sentences(user_input, player.nltk_language)
             with console.status(
