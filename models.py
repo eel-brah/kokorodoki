@@ -17,6 +17,7 @@ from rich.progress import (
     TextColumn,
     TimeElapsedColumn,
 )
+
 from config import MAX_SPEED, MIN_SPEED, REPO_ID, SAMPLE_RATE, console
 from utils import get_language_map, get_nltk_language, get_voices
 
@@ -195,16 +196,17 @@ class TTSPlayer:
                     gui_highlight.queue.put(
                         (gui_highlight.highlight, (audio_size - (back_number or 1),))
                     )
-                if self.audio_player.stream is not None:
-                    while self.audio_player.stream.active:
-                        if self.stop_event.is_set():
-                            self.audio_player.stop()
-                            return
-                        elif self.skip.is_set():
-                            break
-                        elif self.back.is_set():
-                            break
-                        time.sleep(0.2)
+                while self.audio_player.is_playing:
+                    if self.stop_event.is_set():
+                        self.audio_player.stop()
+                        return
+                    elif self.skip.is_set():
+                        self.audio_player.stop()  # Clear current audio
+                        break
+                    elif self.back.is_set():
+                        self.audio_player.stop()  # Clear current audio
+                        break
+                    time.sleep(0.2)
 
                 with self.lock:
                     if not self.back.is_set() and self.back_number > 0:
@@ -288,77 +290,90 @@ class TTSPlayer:
 
 
 class AudioPlayer:
-    def __init__(self, samplerate=SAMPLE_RATE):
+    def __init__(self, samplerate):
         self.samplerate = samplerate
         self.current_frame = 0
         self.playing = True
         self.event = threading.Event()
         self.lock = threading.Lock()
-        self.stream = None
+        self.current_audio = None
+        self.stream = sd.OutputStream(
+            samplerate=self.samplerate,
+            channels=2,
+            callback=self._callback,
+            finished_callback=self._finished_callback,
+        )
+        self.stream.start()
 
     def _callback(self, outdata, frames, time, status):
         with self.lock:
-            if not self.playing:
+            if not self.playing or self.current_audio is None:
                 outdata.fill(0)
                 return
 
-            chunksize = min(len(self.audio_data) - self.current_frame, frames)
+            chunksize = min(len(self.current_audio) - self.current_frame, frames)
 
-            if len(self.audio_data.shape) == 1:
+            if len(self.current_audio.shape) == 1:
+                # Mono audio: copy to all output channels
                 for channel in range(outdata.shape[1]):
-                    outdata[:chunksize, channel] = self.audio_data[
+                    outdata[:chunksize, channel] = self.current_audio[
                         self.current_frame : self.current_frame + chunksize
                     ]
             else:
-                channels = min(self.audio_data.shape[1], outdata.shape[1])
-                outdata[:chunksize, :channels] = self.audio_data[
+                # Stereo or multi-channel: copy up to available channels
+                channels = min(self.current_audio.shape[1], outdata.shape[1])
+                outdata[:chunksize, :channels] = self.current_audio[
                     self.current_frame : self.current_frame + chunksize, :channels
                 ]
+
             if chunksize < frames:
                 outdata[chunksize:] = 0
-                raise sd.CallbackStop()
+                self.current_audio = None
+                self.event.set()
+
             self.current_frame += chunksize
 
+    def _finished_callback(self):
+        """Called when stream is stopped"""
+        self.event.set()
+
     def play(self, audio, blocking=False) -> None:
-        """Start playback"""
-        if self.stream is not None:
-            self.stop()
-        self.audio_data = audio
+        """Start playback of a single audio clip"""
+        with self.lock:
+            self.current_audio = audio
+            self.current_frame = 0
+            self.playing = True
 
-        def finished_callback():
-            self.event.set()
-
-        self.stream = sd.OutputStream(
-            samplerate=self.samplerate,
-            channels=1 if len(self.audio_data.shape) == 1 else self.audio_data.shape[1],
-            callback=self._callback,
-            finished_callback=finished_callback,
-        )
-        self.stream.start()
         if blocking:
+            self.event.clear()
             self.event.wait()
-            self.stop()
 
     def resume(self) -> None:
         """Resume playback"""
         with self.lock:
-            if self.stream is not None:
-                self.playing = True
+            self.playing = True
 
     def pause(self) -> None:
         """Pause playback"""
         with self.lock:
-            if self.stream is not None:
-                self.playing = False
+            self.playing = False
 
     def stop(self) -> None:
-        """stop playback"""
+        """Stop playback and clear current audio"""
         with self.lock:
             self.playing = False
             self.current_frame = 0
-        if self.stream is not None:
-            self.stream.stop(True)
-            self.stream.close(True)
-            self.stream = None
-            self.playing = True
-            self.event.clear()
+            self.current_audio = None
+            self.event.set()
+
+    @property
+    def is_playing(self) -> bool:
+        """Check if audio is actively playing"""
+        with self.lock:
+            return self.current_audio is not None
+
+    def __del__(self):
+        """Cleanup when object is destroyed"""
+        if hasattr(self, "stream"):
+            self.stream.stop()
+            self.stream.close()

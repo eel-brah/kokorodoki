@@ -7,9 +7,19 @@ from typing import Optional
 
 import nltk
 
-from config import (DEFAULT_LANGUAGE, DEFAULT_SPEED, DEFAULT_VOICE, HOST,
-                    MAX_SPEED, MIN_SPEED, PORT, PROMPT, REPO_ID, SAMPLE_RATE,
-                    console)
+from config import (
+    DEFAULT_LANGUAGE,
+    DEFAULT_SPEED,
+    DEFAULT_VOICE,
+    HOST,
+    MAX_SPEED,
+    MIN_SPEED,
+    PORT,
+    PROMPT,
+    REPO_ID,
+    SAMPLE_RATE,
+    console,
+)
 
 with console.status(
     "[yellow]Initializing Kokoro...[/]",
@@ -41,9 +51,17 @@ import sounddevice as sd
 
 from input_hander import Args, get_input
 from models import TTSPlayer
-from utils import (clear_history, display_help, display_languages,
-                   display_status, display_voices, format_status,
-                   get_language_map, get_voices, split_text_to_sentences)
+from utils import (
+    clear_history,
+    display_help,
+    display_languages,
+    display_status,
+    display_voices,
+    format_status,
+    get_language_map,
+    get_voices,
+    split_text_to_sentences,
+)
 
 
 def start(args: Args) -> None:
@@ -76,7 +94,7 @@ def start(args: Args) -> None:
                 nltk.download("punkt_tab", quiet=True)
             console.print("[bold green]Downloading nltk tokenizers finished!")
 
-        audio_warmup()
+        # audio_warmup()
 
         if args.daemon:
             run_daemon(
@@ -266,8 +284,12 @@ def run_daemon(
                 print("  - Another instance of this program running.")
                 print(f"  - A different process using port {port}.")
                 print("To resolve this:")
-                print("  - Check for and terminate any other instances of this program.")
-                print("  - Alternatively, use a different port with the --port option (e.g., --port 9911).")
+                print(
+                    "  - Check for and terminate any other instances of this program."
+                )
+                print(
+                    "  - Alternatively, use a different port with the --port option (e.g., --port 9911)."
+                )
             run_cli(
                 pipeline,
                 DEFAULT_LANGUAGE,
@@ -463,17 +485,3 @@ def run_console(
             console.print("\n[bold yellow]Type !q to exit.[/]")
         except Exception as e:
             console.print(f"[bold red]Error:[/] {str(e)}")
-
-
-def audio_warmup():
-    """
-    Plays a short silence audio to initialize the audio device.
-
-    This function serves as a workaround for audio initialization issues where
-    the first playback in a program using `sounddevice` may not be audible due to
-    device setup latency. By playing a brief, inaudible silence, it ensures the
-    audio system is ready for subsequent playbacks.
-    """
-    silence = np.zeros(int(SAMPLE_RATE * 0.01))
-    sd.play(silence, SAMPLE_RATE)
-    sd.wait()
