@@ -105,6 +105,11 @@ def parse_args() -> Tuple[Action, Optional[float], Optional[str], Optional[str],
         description="Interact with kokorodoki daemon",
     )
 
+    global PORT
+
+    parser.add_argument(
+        "--port", type=int, default=PORT, help=f"Choose a port number (default: {PORT})"
+    )
     parser.add_argument(
         "--status",
         action="store_true",
@@ -216,6 +221,7 @@ def parse_args() -> Tuple[Action, Optional[float], Optional[str], Optional[str],
         Action.NONE,
     )
 
+    PORT = args.port
     return (
         action,
         args.speed,

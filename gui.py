@@ -1,4 +1,5 @@
 import queue
+import signal
 import threading
 import tkinter as tk
 from tkinter import messagebox
@@ -10,7 +11,14 @@ from ttkbootstrap.tooltip import ToolTip
 
 from config import MAX_SPEED, MIN_SPEED, TITLE, VERSION, WINDOW_SIZE
 from models import TTSPlayer
-from utils import get_gui_themes, get_language_map, get_nltk_language, get_nltk_language_map, get_voices, split_text_to_sentences
+from utils import (
+    get_gui_themes,
+    get_language_map,
+    get_nltk_language,
+    get_nltk_language_map,
+    get_voices,
+    split_text_to_sentences,
+)
 
 
 class Gui:
@@ -142,7 +150,7 @@ class Gui:
                     cursor="arrow",
                 )
             )
-            self.player.speak(text, interactive=False, gui_highlight=self)
+            self.player.speak(text, console_mode=False, gui_highlight=self)
             self.queue.put(
                 lambda: self.text_area.config(
                     state="normal",
@@ -194,8 +202,6 @@ class Gui:
         current_pos = 0
         text_content = self.prev_text
 
-
-
         for sentence in self.prev_sentences:
             start_pos = text_content.find(sentence, current_pos)
             if start_pos == -1:
@@ -225,14 +231,11 @@ class Gui:
             )
             current_pos = end_pos
 
-
-
-
     def remove_highlight(self) -> None:
         """Remove highlight"""
         self.text_area.tag_remove("highlight", "1.0", tk.END)
 
-    def highlight(self, sentence:int) -> None:
+    def highlight(self, sentence: int) -> None:
         """Highlight a sentence"""
         if not self.sentence_indices:
             return
@@ -486,7 +489,7 @@ class Gui:
             speed_container,
             from_=0.5,
             to=2.0,
-            value=1.0,
+            value=self.speed,
             bootstyle="info",
             command=self.change_speed,
         )
@@ -521,6 +524,16 @@ class Gui:
         max_label.grid(row=0, column=2, sticky="e")
 
 
+def setup_signal_handler(root):
+    """Set up a signal handler for SIGINT (Ctrl+C) to close the Tkinter window."""
+
+    def signal_handler(sig, frame):
+        print("\nClosing...")
+        root.after(0, root.destroy)
+
+    signal.signal(signal.SIGINT, signal_handler)
+
+
 def run_gui(
     pipeline: KPipeline,
     language: str,
@@ -546,7 +559,10 @@ def run_gui(
 
         root.protocol("WM_DELETE_WINDOW", on_closing)
 
+        setup_signal_handler(root)
+
         root.mainloop()
+
     except Exception as e:
         print(f"An error occurred: {e}")
         messagebox.showerror("Error", f"Application failed to start: {e}")

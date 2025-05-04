@@ -10,6 +10,7 @@ from config import (
     DEFAULT_VOICE,
     MAX_SPEED,
     MIN_SPEED,
+    PORT,
     console,
 )
 from utils import (
@@ -34,6 +35,7 @@ class Args:
     output_file: Optional[str]
     all_voices: bool
     daemon: bool
+    port: int
     gui: bool
     theme: int
     verbose: bool
@@ -45,6 +47,27 @@ def parse_args() -> Args:
     parser = argparse.ArgumentParser(
         prog="kokorodoki",
         description="Real-time TTS with Kokoro-82M. Use !commands to adjust settings.",
+    )
+
+    parser.add_argument(
+        "--list-languages",
+        "--list_languages",
+        action="store_true",
+        help="List available languages",
+    )
+    parser.add_argument(
+        "--list-voices",
+        "--list_voices",
+        type=str,
+        nargs="?",
+        const=None,
+        default=False,
+        help="List available voices. Optionally provide a language to filter by.",
+    )
+    parser.add_argument(
+        "--themes",
+        action="store_true",
+        help="Show the available gui themes",
     )
 
     parser.add_argument(
@@ -69,27 +92,6 @@ def parse_args() -> Args:
         help=f"Initial speed (default: {DEFAULT_SPEED}, range: {MIN_SPEED}-{MAX_SPEED})",
     )
     parser.add_argument(
-        "--list-languages",
-        "--list_languages",
-        action="store_true",
-        help="List available languages",
-    )
-    parser.add_argument(
-        "--list-voices",
-        "--list_voices",
-        type=str,
-        nargs="?",
-        const=None,
-        default=False,
-        help="List available voices. Optionally provide a language to filter by.",
-    )
-    parser.add_argument(
-        "--history-off",
-        "--history_off",
-        action="store_true",
-        help="Disable the saving of history",
-    )
-    parser.add_argument(
         "--device",
         type=str,
         default=None,
@@ -99,6 +101,31 @@ def parse_args() -> Args:
             "Default: Auto-selects 'cuda' if available, otherwise falls back to 'cpu'. "
             "If 'cuda' is specified but unavailable, raises an error."
         ),
+    )
+
+    parser.add_argument(
+        "--history-off",
+        "--history_off",
+        action="store_true",
+        help="Disable the saving of history",
+    )
+    parser.add_argument(
+        "--verbose",
+        "-V",
+        action="store_true",
+        help="Print what is being done",
+    )
+    parser.add_argument(
+        "--ctrl_c_off",
+        "-c",
+        action="store_true",
+        help="Make Ctrl+C not end playback",
+    )
+
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Read a text/file with all the available voices (only valid when --text or --file is used)",
     )
     input_group = parser.add_mutually_exclusive_group()
     input_group.add_argument(
@@ -123,14 +150,12 @@ def parse_args() -> Args:
         help="Output file path (only valid when --text or --file is used)",
     )
     parser.add_argument(
-        "--all",
-        action="store_true",
-        help="Read a text/file with all the available voices (only valid when --text or --file is used)",
-    )
-    parser.add_argument(
         "--daemon",
         action="store_true",
         help="Daemon mode",
+    )
+    parser.add_argument(
+        "--port", type=int, default=PORT, help=f"Choose a port number (default: {PORT})"
     )
     parser.add_argument(
         "--gui",
@@ -139,27 +164,10 @@ def parse_args() -> Args:
         help="Gui mode",
     )
     parser.add_argument(
-        "--themes",
-        action="store_true",
-        help="Show the available gui themes",
-    )
-    parser.add_argument(
         "--theme",
         type=int,
         default=DEFAULT_THEME,
         help=f"Choose a theme number (default: {get_gui_themes()[DEFAULT_THEME]}, use --themes to get list of themes)",
-    )
-    parser.add_argument(
-        "--verbose",
-        "-V",
-        action="store_true",
-        help="Print what is being done",
-    )
-    parser.add_argument(
-        "--ctrl_c_off",
-        "-c",
-        action="store_true",
-        help="Make Ctrl+C not end playback",
     )
 
     args = parser.parse_args()
@@ -177,6 +185,26 @@ def parse_args() -> Args:
         display_themes()
         sys.exit(0)
 
+    # Validate modes
+    selected_mode = sum(
+        [args.gui, args.daemon, (args.text is not None or args.file is not None)]
+    )
+    if selected_mode not in (0, 1):
+        console.print(
+            "[bold red]Error:[/] Only one mode (Console, GUI, Daemon, or CLI) can be selected."
+        )
+        sys.exit(0)
+    if args.theme != DEFAULT_THEME and not args.gui:
+        console.print(
+            "[bold yellow]Warning:[/] Invalid use of --theme without --gui or -g"
+        )
+    if selected_mode == 1 and (args.verbose or args.ctrl_c_off or args.history_off):
+        console.print(
+            "[bold yellow]Warning:[/] Invalid use of verbose, ctrl_c_off, or history_off with mode other than Console."
+        )
+    if args.port != PORT and not args.daemon:
+        console.print("[bold yellow]Warning:[/] Invalid use of --port without --daemon")
+
     # Validate inputs
     languages = get_language_map()
     voices = get_voices()
@@ -190,7 +218,7 @@ def parse_args() -> Args:
         console.print(f"[bold red]Error:[/] Invalid voice '{args.voice}'")
         display_voices()
         sys.exit(1)
-    if not args.voice.startswith(args.language):
+    if not args.all and not args.voice.startswith(args.language):
         console.print(
             f"[bold red]Error:[/] Voice '{args.voice}' is not made for language '{get_language_map()[args.language]}'"
         )
@@ -208,11 +236,17 @@ def parse_args() -> Args:
         display_themes()
         sys.exit(1)
 
+    if not 0 <= args.port <= 65535:
+        console.print(
+            f"[bold red]Error:[/] Port {args.port} is out of valid range (0-65535)."
+        )
+        sys.exit(1)
+
     if args.output is not None and not args.output.endswith(".wav"):
         console.print("[bold red]Error:[/] The output file name should end with .wav")
         sys.exit(1)
 
-    # Validate that output/all isn't used without input
+    # Validate that output or all isn't used without input
     if args.output is not None and args.all:
         console.print("[bold red]Error:[/] --output/-o can't be used with --all")
         sys.exit(1)
@@ -227,7 +261,7 @@ def parse_args() -> Args:
         )
         sys.exit(1)
 
-    # Handle input text/file
+    # Handle input
     input_text = None
     if args.file is not None:
         if not args.file.strip():
@@ -255,6 +289,7 @@ def parse_args() -> Args:
         args.output,
         args.all,
         args.daemon,
+        args.port,
         args.gui,
         args.theme,
         args.verbose,

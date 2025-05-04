@@ -17,7 +17,6 @@ from rich.progress import (
     TextColumn,
     TimeElapsedColumn,
 )
-
 from config import MAX_SPEED, MIN_SPEED, REPO_ID, SAMPLE_RATE, console
 from utils import get_language_map, get_nltk_language, get_voices
 
@@ -246,7 +245,7 @@ class TTSPlayer:
         self.audio_player.resume()
 
     def speak(
-        self, text: Union[str, list], interactive=True, gui_highlight=None
+        self, text: Union[str, list], console_mode=True, gui_highlight=None
     ) -> None:
         """Start TTS generation and playback in separate threads."""
 
@@ -273,10 +272,10 @@ class TTSPlayer:
             # Wait for playback to complete
             play_thread.join()
         except KeyboardInterrupt:
-            if interactive and self.ctrlc:
+            if console_mode and self.ctrlc:
                 self.stop_playback(False)
                 console.print("\n[bold yellow]Interrupted. Type !q to exit.[/]")
-            elif interactive:
+            elif console_mode:
                 # self.stop_playback(False)
                 self.print_complete = False
                 console.print("\n[bold yellow]Type !p to pause.[/]")
@@ -284,7 +283,7 @@ class TTSPlayer:
                 console.print("\n[bold yellow]Exiting...[/]")
             gen_thread.join()
             play_thread.join()
-            if not interactive:
+            if not console_mode:
                 sys.exit()
 
 

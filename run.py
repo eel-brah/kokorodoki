@@ -7,18 +7,9 @@ from typing import Optional
 
 import nltk
 
-from config import (
-    DEFAULT_LANGUAGE,
-    DEFAULT_SPEED,
-    DEFAULT_VOICE,
-    HOST,
-    MAX_SPEED,
-    MIN_SPEED,
-    PORT,
-    PROMPT,
-    REPO_ID,
-    console,
-)
+from config import (DEFAULT_LANGUAGE, DEFAULT_SPEED, DEFAULT_VOICE, HOST,
+                    MAX_SPEED, MIN_SPEED, PORT, PROMPT, REPO_ID, SAMPLE_RATE,
+                    console)
 
 with console.status(
     "[yellow]Initializing Kokoro...[/]",
@@ -45,19 +36,14 @@ with console.status(
     from kokoro import KPipeline
 console.print("[bold green]Kokoro initialized!")
 
+import numpy as np
+import sounddevice as sd
+
 from input_hander import Args, get_input
 from models import TTSPlayer
-from utils import (
-    clear_history,
-    display_help,
-    display_languages,
-    display_status,
-    display_voices,
-    format_status,
-    get_language_map,
-    get_voices,
-    split_text_to_sentences,
-)
+from utils import (clear_history, display_help, display_languages,
+                   display_status, display_voices, format_status,
+                   get_language_map, get_voices, split_text_to_sentences)
 
 
 def start(args: Args) -> None:
@@ -90,6 +76,8 @@ def start(args: Args) -> None:
                 nltk.download("punkt_tab", quiet=True)
             console.print("[bold green]Downloading nltk tokenizers finished!")
 
+        audio_warmup()
+
         if args.daemon:
             run_daemon(
                 pipeline,
@@ -98,6 +86,7 @@ def start(args: Args) -> None:
                 args.speed,
                 args.device,
                 args.verbose,
+                args.port,
             )
         elif args.gui:
             from gui import run_gui
@@ -115,7 +104,7 @@ def start(args: Args) -> None:
                 pipeline, args.language, args.speed, args.verbose, args.input_text
             )
         elif args.input_text:
-            run_noninteractive(
+            run_cli(
                 pipeline,
                 args.language,
                 args.voice,
@@ -125,7 +114,7 @@ def start(args: Args) -> None:
                 args.output_file,
             )
         else:
-            run_interactive(
+            run_console(
                 pipeline,
                 args.language,
                 args.voice,
@@ -147,7 +136,7 @@ def start(args: Args) -> None:
 def speak_thread(clipboard_data: str, player: TTSPlayer) -> None:
     """Player speak wrapper"""
     try:
-        player.speak(clipboard_data, interactive=False)
+        player.speak(clipboard_data, console_mode=False)
     except Exception as e:
         print(f"Error in thread: {str(e)}")
 
@@ -159,6 +148,7 @@ def run_daemon(
     speed: float,
     device: Optional[str],
     verbose: bool,
+    port: int,
 ) -> None:
     """Start daemon mode"""
     current_thread = None
@@ -166,9 +156,9 @@ def run_daemon(
 
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
-            server_socket.bind((HOST, PORT))
+            server_socket.bind((HOST, port))
             server_socket.listen(1)
-            print(f"Listening on {HOST}:{PORT}...")
+            print(f"Listening on {HOST}:{port}...")
 
             while True:
                 conn, addr = server_socket.accept()
@@ -270,7 +260,15 @@ def run_daemon(
             player.stop_playback()
             current_thread.join(timeout=1)
         try:
-            run_noninteractive(
+            if "Address already in use" in str(e):
+                print(f"Error: Port {port} is already in use.")
+                print("This could be due to:")
+                print("  - Another instance of this program running.")
+                print(f"  - A different process using port {port}.")
+                print("To resolve this:")
+                print("  - Check for and terminate any other instances of this program.")
+                print("  - Alternatively, use a different port with the --port option (e.g., --port 9911).")
+            run_cli(
                 pipeline,
                 DEFAULT_LANGUAGE,
                 DEFAULT_VOICE,
@@ -301,13 +299,13 @@ def run_with_all(
         for voice in target_voices:
             player.change_voice(voice)
             console.print(f"[cyan]{voice} speaking:[/] {input_text[:30]}")
-            player.speak(input_text, interactive=False)
+            player.speak(input_text, console_mode=False)
     except KeyboardInterrupt:
         console.print("[bold yellow]Exiting...[/]")
         sys.exit()
 
 
-def run_noninteractive(
+def run_cli(
     pipeline: KPipeline,
     language: str,
     voice: str,
@@ -323,7 +321,7 @@ def run_noninteractive(
             with console.status(
                 f"[cyan]Speaking:[/] {input_text[:30]}", spinner_style="cyan"
             ):
-                player.speak(input_text, interactive=False)
+                player.speak(input_text, console_mode=False)
         except KeyboardInterrupt:
             console.print("[bold yellow]Exiting...[/]")
             sys.exit()
@@ -331,7 +329,7 @@ def run_noninteractive(
         player.generate_audio_file(input_text, output_file=output_file)
 
 
-def run_interactive(
+def run_console(
     pipeline: KPipeline,
     language: str,
     voice: str,
@@ -465,3 +463,17 @@ def run_interactive(
             console.print("\n[bold yellow]Type !q to exit.[/]")
         except Exception as e:
             console.print(f"[bold red]Error:[/] {str(e)}")
+
+
+def audio_warmup():
+    """
+    Plays a short silence audio to initialize the audio device.
+
+    This function serves as a workaround for audio initialization issues where
+    the first playback in a program using `sounddevice` may not be audible due to
+    device setup latency. By playing a brief, inaudible silence, it ensures the
+    audio system is ready for subsequent playbacks.
+    """
+    silence = np.zeros(int(SAMPLE_RATE * 0.01))
+    sd.play(silence, SAMPLE_RATE)
+    sd.wait()
