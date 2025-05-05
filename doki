@@ -1,0 +1,3 @@
+#!/bin/bash
+#~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py "$@"
+~/venv/myenv/bin/python3.12 /home/sam/Desktop/coding/kokoro/kokorodoki/src/client.py "$@"

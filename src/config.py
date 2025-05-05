@@ -10,25 +10,33 @@ REPO_ID = "hexgrad/Kokoro-82M"
 HISTORY_FILE = ".kokorodoki_history"
 HISTORY_LIMIT = 1024
 PROMPT = "> "
+
 COMMANDS = [
     "!lang",
     "!voice",
     "!speed",
     "!stop",
+    "!pause",
+    "!resume",
+    "!next",
+    "!back",
     "!status",
     "!list_langs",
     "!list_voices",
+    "!list_all_voices",
     "!clear",
-    "!verbose",
     "!clear_history",
+    "!verbose",
     "!help",
     "!quit",
+    "!ctrlc",
+    "!status",
 ]
-HOST = "0.0.0.0" 
-PORT = 5561     
-TITLE="KokoroDoki"
-WINDOW_SIZE="700x600"
-VERSION="v0.1.0"
-DEFAULT_THEME=1
+HOST = "0.0.0.0"
+PORT = 5561
+TITLE = "KokoroDoki"
+WINDOW_SIZE = "700x600"
+VERSION = "v0.1.0"
+DEFAULT_THEME = 1
 
 console = Console()

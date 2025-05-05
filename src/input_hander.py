@@ -46,7 +46,7 @@ def parse_args() -> Args:
     """Parse command-line arguments"""
     parser = argparse.ArgumentParser(
         prog="kokorodoki",
-        description="Real-time TTS with Kokoro-82M. Use !commands to adjust settings.",
+        description="Real-time TTS with Kokoro-82M.",
     )
 
     parser.add_argument(
