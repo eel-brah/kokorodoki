@@ -1,20 +1,16 @@
 [Unit]
 Description=kokorodoki
-After=network.target sound.target
+After=network.target sound.target 
 Wants=sound.target
 
 [Service]
 Type=simple
-User=username
-Group=audio
 WorkingDirectory=PATH
 ExecStart=PYTHON_PATH PATH/kokorodoki/main.py --daemon
-Environment=XDG_RUNTIME_DIR=VALUE
-Environment=DISPLAY=VALUE
+Environment=DISPLAY=:1
 Restart=on-failure
 RestartSec=5
-
-ExecStartPre=/bin/sleep 2
+ExecStartPre=/bin/sleep 15
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
