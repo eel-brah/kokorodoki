@@ -148,13 +148,13 @@ class TTSPlayer:
                     )
 
                     for result in generator:
-                        audio_chunks.append(result.audio)
+                        trimed_audio, _ = librosa.effects.trim(
+                            result.audio.numpy(), top_db=50
+                        )
+                        audio_chunks.append(self.to_stereo(trimed_audio))
 
-                # Concatenate all audio chunks
-                full_audio = torch.cat(audio_chunks, dim=0)
-
-                # Save the combined audio
-                sf.write(output_file, full_audio, SAMPLE_RATE)
+                full_audio = np.concatenate(audio_chunks, axis=0)
+                sf.write(output_file, full_audio, SAMPLE_RATE, format="WAV")
 
                 progress.update(
                     task,
@@ -168,6 +168,16 @@ class TTSPlayer:
             sys.exit()
         except Exception as e:
             console.print(f"[bold red]Generation error:[/] {str(e)}")
+
+    def to_stereo(self, chunk):
+        """Convert mono chunk to stereo"""
+        if chunk.ndim == 1:
+            return np.stack([chunk, chunk], axis=1)
+        if chunk.ndim == 2 and chunk.shape[1] == 2:
+            return chunk
+        raise ValueError(
+            f"Unsupported chunk shape: {chunk.shape}. Expected 1D (mono) or 2D (stereo)."
+        )
 
     def play_audio(self, gui_highlight=None) -> None:
         """Play audio chunks from the queue."""
