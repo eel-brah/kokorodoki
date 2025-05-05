@@ -2,7 +2,7 @@ import queue
 import sys
 import threading
 import time
-from typing import Optional, Union
+from typing import Optional
 
 import librosa
 import numpy as np
@@ -95,7 +95,7 @@ class TTSPlayer:
         end_idx = non_silent[-1] + 1
         return audio[start_idx:end_idx]
 
-    def generate_audio(self, text: Union[str, list]) -> None:
+    def generate_audio(self, text: str | list) -> None:
         """Generate audio chunks and put them in the queue."""
         try:
             sentences = [text] if isinstance(text, str) else text
@@ -260,7 +260,7 @@ class TTSPlayer:
         self.audio_player.resume()
 
     def speak(
-        self, text: Union[str, list], console_mode=True, gui_highlight=None
+        self, text: str | list, console_mode=True, gui_highlight=None
     ) -> None:
         """Start TTS generation and playback in separate threads."""
 

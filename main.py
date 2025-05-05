@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import sys
 
 from input_hander import Args, parse_args
