@@ -8,6 +8,42 @@ Powered by [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) an open-weigh
 
 Whether you need to listen to articles, generating audio files, or just want text spoken back in real time, KokoroDoki has you covered—featuring Console, GUI, CLI, and Daemon modes to suit any workflow.
 
+## KokoroDoki: Real-Time Text-to-Speech (TTS)
+
+**🎧 KokoroDoki is a fast, real-time, flexible, and open-source TTS engine that sounds natural and works anywhere.** Try it locally with GPU acceleration and a variety of interfaces: Console, GUI, Daemon, and CLI.
+
+Powered by [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M), an open-weight multilingual model, KokoroDoki delivers expressive, high-quality speech with the responsiveness of a lightweight system.
+
+Whether you're listening to articles, converting files to audio, or just need live spoken feedback, KokoroDoki has you covered.
+
+---
+
+## 📁 Table of Contents
+
+* [Features](#features)
+* [🌐 Language & Voice Availability](#-language--voice-availability)
+* [Installation](#installation)
+
+  * [Requirements](#requirements)
+  * [Setup Instructions](#setup-instructions)
+
+    * [Dependencies](#dependencies)
+    * [Installation](#installation-1)
+    * [Integrate with systemd](#integrate-with-systemd)
+    * [Optional: Language Support Packages](#optional-language-support-packages)
+* [Usage](#usage)
+
+  * [Examples](#examples)
+  * [Command-Line Arguments](#command-line-arguments)
+  * [1/4. 💥 Console Mode (Interactive Terminal)](#14--console-mode-interactive-terminal)
+  * [2/4. 🖌️ GUI Mode](#24--gui-mode)
+  * [3/4. 🛠️ Daemon Mode (Background Service)](#34--daemon-mode-background-service)
+  * [4/4. ⚡ CLI Mode (One-Shot)](#44--cli-mode-one-shot)
+* [Core Dependencies](#core-dependencies)
+* [🤝 Contribute](#-contribute)
+* [📜 License](#-license)
+
+---
 
 ## Features
 
@@ -39,7 +75,7 @@ Whether you need to listen to articles, generating audio files, or just want tex
   One-shot text-to-speech conversion from input text or file.
 
 * **🧠 CPU & GPU**
-  Built on [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M), supports CPU and CUDA-based acceleration.
+  Supports CPU and CUDA-based acceleration.
 
 
 
