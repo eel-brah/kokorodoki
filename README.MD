@@ -1,5 +1,6 @@
 **🎧 Natural-sounding TTS that fits anywhere. Fast, Real-Time, flexible, and open. Try KokoroDoki!**
 
+
 # KokoroDoki: Real-Time Text-to-Speech (TTS)
 
 **KokoroDoki** is a real-time Text-to-Speech application supporting multiple languages and voices. It runs locally on your laptop, utilizing either the CPU or leverage CUDA for GPU acceleration.
@@ -7,14 +8,6 @@
 Powered by [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) an open-weight TTS model that delivers high-quality, natural-sounding speech, it rivals larger models while remaining lightweight and highly responsive.
 
 Whether you need to listen to articles, generating audio files, or just want text spoken back in real time, KokoroDoki has you covered—featuring Console, GUI, CLI, and Daemon modes to suit any workflow.
-
-## KokoroDoki: Real-Time Text-to-Speech (TTS)
-
-**🎧 KokoroDoki is a fast, real-time, flexible, and open-source TTS engine that sounds natural and works anywhere.** Try it locally with GPU acceleration and a variety of interfaces: Console, GUI, Daemon, and CLI.
-
-Powered by [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M), an open-weight multilingual model, KokoroDoki delivers expressive, high-quality speech with the responsiveness of a lightweight system.
-
-Whether you're listening to articles, converting files to audio, or just need live spoken feedback, KokoroDoki has you covered.
 
 ---
 
