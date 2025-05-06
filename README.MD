@@ -8,7 +8,6 @@ Powered by [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) an open-weigh
 
 Whether you need to listen to articles, generating audio files, or just want text spoken back in real time, KokoroDoki has you covered—featuring Console, GUI, CLI, and Daemon modes to suit any workflow.
 
----
 
 ## Features
 
@@ -42,7 +41,7 @@ Whether you need to listen to articles, generating audio files, or just want tex
 * **🧠 CPU & GPU**
   Built on [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M), supports CPU and CUDA-based acceleration.
 
----
+
 
 ## 🌐 Language & Voice Availability
 
@@ -70,7 +69,6 @@ Whether you need to listen to articles, generating audio files, or just want tex
 * **Build Tools**: `python3-dev` `python3-virtualenv`
 * **Clipboard Support (for Daemon Mode)**: `xclip`
 
----
 
 ### Setup Instructions
 
@@ -147,7 +145,6 @@ pip install pyopenjtalk
 pip install ordered_set pypinyin jieba cn2an
 ```
 
----
 
 ## Usage
 
@@ -277,7 +274,6 @@ kokorodoki
 | `!quit`, `!q`       | Exit the program                        | `!quit`            |
 
 
----
 
 ### 2/4. 🖌️ GUI Mode
 
@@ -295,7 +291,6 @@ Themes:
 
 Use `--theme <number>` to set it.
 
----
 
 ### 3/4. 🛠️ Daemon Mode (Background Service)
 
@@ -344,7 +339,7 @@ doki --resume
 
 #### Recommended: Use with `systemd` for Better Control
 
-See the ['Integrate with systemd'](#### Integrate with systemd) section in the installation guide above for steps.
+See the ['Integrate with systemd'](#integrate-with-systemd) section in the installation guide above for steps.
 
 #### Recommended: Create Custom Shortcuts
 
@@ -374,7 +369,6 @@ Below are some useful commands you can bind to shortcuts:
 
 You can assign these to keyboard shortcuts using your desktop environment’s keyboard settings (e.g., GNOME → Settings → Keyboard → Custom Shortcuts).
 
----
 
 ### 4/4. ⚡ CLI Mode (One-Shot)
 
@@ -389,9 +383,8 @@ python src/main.py --file input.txt --output out.wav
 python src/main.py -l a --text "All voices" --all      
 ```
 
----
 
-## 🧩 Core Dependencies
+## Core Dependencies
 
 * `nltk` – Sentence parsing
 * `torch`, `numpy`, `librosa` – Audio processing
@@ -401,7 +394,6 @@ python src/main.py -l a --text "All voices" --all
 * `rich` – Fancy CLI output
 * `socket` - For Daemon and Client communication
 
----
 
 ## 🤝 Contribute
 
@@ -412,7 +404,6 @@ python src/main.py -l a --text "All voices" --all
 
 Bug reports and feature requests are welcome on GitHub Issues.
 
----
 
 ## 📜 License
 This project is licensed under the GNU General Public License v3.0 (GPLv3).
