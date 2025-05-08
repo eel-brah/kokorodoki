@@ -149,7 +149,7 @@ class TTSPlayer:
 
                     for result in generator:
                         trimed_audio, _ = librosa.effects.trim(
-                            result.audio.numpy(), top_db=50
+                            result.audio.numpy(), top_db=70
                         )
                         audio_chunks.append(self.to_stereo(trimed_audio))
 
