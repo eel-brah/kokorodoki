@@ -1,5 +1,6 @@
 **🎧 Natural-sounding TTS that fits anywhere. Fast, Real-Time, flexible, and open. Try KokoroDoki!**
 
+
 # KokoroDoki: Real-Time Text-to-Speech (TTS)
 
 **KokoroDoki** is a real-time Text-to-Speech application supporting multiple languages and voices. It runs locally on your laptop, utilizing either the CPU or leverage CUDA for GPU acceleration.
@@ -7,6 +8,33 @@
 Powered by [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) an open-weight TTS model that delivers high-quality, natural-sounding speech, it rivals larger models while remaining lightweight and highly responsive.
 
 Whether you need to listen to articles, generating audio files, or just want text spoken back in real time, KokoroDoki has you covered—featuring Console, GUI, CLI, and Daemon modes to suit any workflow.
+
+---
+
+## 📁 Table of Contents
+
+* [Features](#features)
+* [🌐 Language & Voice Availability](#-language--voice-availability)
+* [Installation](#installation)
+
+  * [Requirements](#requirements)
+  * [Setup Instructions](#setup-instructions)
+
+    * [Dependencies](#dependencies)
+    * [Installation](#installation-1)
+    * [Integrate with systemd](#integrate-with-systemd)
+    * [Optional: Language Support Packages](#optional-language-support-packages)
+* [Usage](#usage)
+
+  * [Examples](#examples)
+  * [Command-Line Arguments](#command-line-arguments)
+  * [1/4. 💥 Console Mode (Interactive Terminal)](#14--console-mode-interactive-terminal)
+  * [2/4. 🖌️ GUI Mode](#24--gui-mode)
+  * [3/4. 🛠️ Daemon Mode (Background Service)](#34--daemon-mode-background-service)
+  * [4/4. ⚡ CLI Mode (One-Shot)](#44--cli-mode-one-shot)
+* [Core Dependencies](#core-dependencies)
+* [🤝 Contribute](#-contribute)
+* [📜 License](#-license)
 
 ---
 
@@ -40,9 +68,9 @@ Whether you need to listen to articles, generating audio files, or just want tex
   One-shot text-to-speech conversion from input text or file.
 
 * **🧠 CPU & GPU**
-  Built on [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M), supports CPU and CUDA-based acceleration.
+  Supports CPU and CUDA-based acceleration.
 
----
+
 
 ## 🌐 Language & Voice Availability
 
@@ -70,7 +98,6 @@ Whether you need to listen to articles, generating audio files, or just want tex
 * **Build Tools**: `python3-dev` `python3-virtualenv`
 * **Clipboard Support (for Daemon Mode)**: `xclip`
 
----
 
 ### Setup Instructions
 
@@ -147,7 +174,6 @@ pip install pyopenjtalk
 pip install ordered_set pypinyin jieba cn2an
 ```
 
----
 
 ## Usage
 
@@ -277,7 +303,6 @@ kokorodoki
 | `!quit`, `!q`       | Exit the program                        | `!quit`            |
 
 
----
 
 ### 2/4. 🖌️ GUI Mode
 
@@ -295,7 +320,6 @@ Themes:
 
 Use `--theme <number>` to set it.
 
----
 
 ### 3/4. 🛠️ Daemon Mode (Background Service)
 
@@ -344,7 +368,7 @@ doki --resume
 
 #### Recommended: Use with `systemd` for Better Control
 
-See the ['Integrate with systemd'](#### Integrate with systemd) section in the installation guide above for steps.
+See the ['Integrate with systemd'](#integrate-with-systemd) section in the installation guide above for steps.
 
 #### Recommended: Create Custom Shortcuts
 
@@ -374,7 +398,6 @@ Below are some useful commands you can bind to shortcuts:
 
 You can assign these to keyboard shortcuts using your desktop environment’s keyboard settings (e.g., GNOME → Settings → Keyboard → Custom Shortcuts).
 
----
 
 ### 4/4. ⚡ CLI Mode (One-Shot)
 
@@ -389,9 +412,8 @@ python src/main.py --file input.txt --output out.wav
 python src/main.py -l a --text "All voices" --all      
 ```
 
----
 
-## 🧩 Core Dependencies
+## Core Dependencies
 
 * `nltk` – Sentence parsing
 * `torch`, `numpy`, `librosa` – Audio processing
@@ -401,7 +423,6 @@ python src/main.py -l a --text "All voices" --all
 * `rich` – Fancy CLI output
 * `socket` - For Daemon and Client communication
 
----
 
 ## 🤝 Contribute
 
@@ -412,7 +433,6 @@ python src/main.py -l a --text "All voices" --all
 
 Bug reports and feature requests are welcome on GitHub Issues.
 
----
 
 ## 📜 License
 This project is licensed under the GNU General Public License v3.0 (GPLv3).
