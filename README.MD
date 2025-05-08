@@ -1,6 +1,3 @@
-**🎧 Natural-sounding TTS that fits anywhere. Fast, Real-Time, flexible, and open. Try KokoroDoki!**
-
-
 # KokoroDoki: Real-Time Text-to-Speech (TTS)
 
 **KokoroDoki** is a real-time Text-to-Speech application supporting multiple languages and voices. It runs locally on your laptop, utilizing either the CPU or leverage CUDA for GPU acceleration.
@@ -8,6 +5,8 @@
 Powered by [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) an open-weight TTS model that delivers high-quality, natural-sounding speech, it rivals larger models while remaining lightweight and highly responsive.
 
 Whether you need to listen to articles, generating audio files, or just want text spoken back in real time, KokoroDoki has you covered—featuring Console, GUI, CLI, and Daemon modes to suit any workflow.
+
+🎧 [Voice Demo - af_heart](samples/welcome.wav)
 
 ---
 
@@ -33,8 +32,8 @@ Whether you need to listen to articles, generating audio files, or just want tex
   * [3/4. 🛠️ Daemon Mode (Background Service)](#34--daemon-mode-background-service)
   * [4/4. ⚡ CLI Mode (One-Shot)](#44--cli-mode-one-shot)
 * [Core Dependencies](#core-dependencies)
-* [🤝 Contribute](#-contribute)
-* [📜 License](#-license)
+* [Contribute](#-contribute)
+* [License](#-license)
 
 ---
 
@@ -64,12 +63,16 @@ Whether you need to listen to articles, generating audio files, or just want tex
 * **🛠️ Daemon**
   Runs as a background service. Accepts commands/text from client.py.
 
-* **</> CLI Modes**
+* **\</> CLI Modes**
   One-shot text-to-speech conversion from input text or file.
+
+* **⚡ Fast & Real-time**
+  Designed for low-latency performance with quick response and smooth voice output.
 
 * **🧠 CPU & GPU**
   Supports CPU and CUDA-based acceleration.
 
+> ⚠️ **Note:** While CPU mode is supported, performance is significantly better with CUDA-enabled GPUs. Without CUDA, real-time responsiveness and speed may be reduced.
 
 
 ## 🌐 Language & Voice Availability
@@ -114,7 +117,7 @@ sudo apt update && sudo apt install -y python3.12 python3.12-dev python3.12-venv
 
 For Fedora/RHEL/CentOS:
 ```bash
-sudo dnf install -y python3.12 python3.12-devel python3-virtualenv portaudio-devel espeak xclip
+sudo dnf install -y python3.12 python3.12-devel python3-virtualenv portaudio espeak xclip
 ```
 
 #### Installation
@@ -435,7 +438,7 @@ Bug reports and feature requests are welcome on GitHub Issues.
 
 
 ## 📜 License
-This project is licensed under the GNU General Public License v3.0 (GPLv3).
+This project is licensed under the [GNU General Public License v3.0 (GPLv3)](LICENSE).
 
 You are free to use, modify, and distribute this software under the terms of the GPLv3.
 
