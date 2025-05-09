@@ -7,6 +7,7 @@ Powered by [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) an open-weigh
 Whether you need to listen to articles, generating audio files, or just want text spoken back in real time, KokoroDoki has you covered—featuring Console, GUI, CLI, and Daemon modes to suit any workflow.
 
 🎧 [Voice Demo - af_heart](samples/welcome.wav)
+
 https://github.com/user-attachments/assets/b1f5b1bc-e141-47b4-908e-abc5fdf5f70a
 
 ---
