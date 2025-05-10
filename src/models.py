@@ -116,7 +116,7 @@ class TTSPlayer:
                                 f"[dim]Generated: {result.graphemes[:30]}...[/]"
                             )
                         # Trim silence for smooth reading
-                        trimed_audio, _ = librosa.effects.trim(audio, top_db=50)
+                        trimed_audio, _ = librosa.effects.trim(audio, top_db=60)
                         # trimed_audio = self.trim_silence(audio, threshold=0.001)
                         self.audio_queue.put(trimed_audio)
 

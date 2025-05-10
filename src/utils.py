@@ -409,7 +409,7 @@ def split_text_to_sentences(text: str, language: str) -> List[str]:
         if len(sentence) > 350:
             new_sentences.extend(split_long_sentence(sentence, max_len=350))
         else:
-            new_sentences.append(sentence)
+            new_sentences.extend(sentence.split('\n'))
 
     # new_sentences = merge_short_sentences(new_sentences, min_len=50, max_len=300)
     return new_sentences
