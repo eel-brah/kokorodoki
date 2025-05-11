@@ -24,6 +24,19 @@ def get_language_map() -> Dict[str, str]:
         "z": "Mandarin Chinese",
     }
 
+def get_easyocr_language_map() -> Dict[str, str]:
+    """Return the available languages for EasyOCR"""
+    return {
+        "a": "en",
+        "b": "en",
+        "e": "es",
+        "f": "fr",
+        "h": "hi",
+        "i": "it",
+        "p": "pt",
+        "j": "ja",
+        "z": "ch_sim",
+    }
 
 def get_voices() -> List[str]:
     """Return the available voices"""

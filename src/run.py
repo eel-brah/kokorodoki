@@ -5,6 +5,7 @@ import time
 import warnings
 from typing import Optional
 
+import easyocr
 import nltk
 
 from config import (
@@ -58,6 +59,7 @@ from utils import (
     display_status,
     display_voices,
     format_status,
+    get_easyocr_language_map,
     get_language_map,
     get_voices,
     split_text_to_sentences,
@@ -171,6 +173,11 @@ def run_daemon(
     """Start daemon mode"""
     current_thread = None
     player = TTSPlayer(pipeline, language, voice, speed, verbose)
+    easyocr_lang = [
+        lang for code, lang in get_easyocr_language_map().items() if code == language
+    ]
+
+    reader = easyocr.Reader(easyocr_lang)
 
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
@@ -191,8 +198,20 @@ def run_daemon(
                             break
                         data += chunk
 
-                    clipboard_data = data.decode()
-                    print(f"Received {clipboard_data[:20]}")
+                    if data.startswith(b"IMAGE:"):
+                        results = reader.readtext(data[6:])
+                        clipboard_data = ""
+                        clipboard_data = " ".join(
+                            text for _, text, _ in results if text
+                        ).strip()
+                        if not clipboard_data:
+                            continue
+                    elif data.startswith(b"TEXT:"):
+                        clipboard_data = data[5:].decode()
+                    else:
+                        clipboard_data = data.decode()
+
+                    print(f"Received {clipboard_data[:20]}...")
 
                 # Handle commands
                 if clipboard_data.startswith("!"):
