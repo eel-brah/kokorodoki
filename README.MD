@@ -8,6 +8,8 @@ Whether you need to listen to articles, generating audio files, or just want tex
 
 🎧 [Voice Demo - af_heart](samples/welcome.wav)
 
+https://github.com/user-attachments/assets/a6832da3-a9d7-49dc-ae5e-d924df700c44
+
 ---
 
 ## 📁 Table of Contents
