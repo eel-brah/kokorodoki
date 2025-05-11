@@ -5,8 +5,6 @@ import time
 import warnings
 from typing import Optional
 
-import easyocr
-import nltk
 
 from config import (
     DEFAULT_LANGUAGE,
@@ -47,8 +45,8 @@ with console.status(
     from kokoro import KPipeline
 console.print("[bold green]Kokoro initialized!")
 
-import numpy as np
-import sounddevice as sd
+import nltk
+import easyocr
 
 from input_hander import Args, get_input
 from models import TTSPlayer
@@ -99,6 +97,13 @@ def start(args: Args) -> None:
         # audio_warmup()
 
         if args.daemon:
+            easyocr_lang = [
+                lang
+                for code, lang in get_easyocr_language_map().items()
+                if code == args.language
+            ]
+
+            image_reader = easyocr.Reader(easyocr_lang)
             run_daemon(
                 pipeline,
                 args.language,
@@ -107,10 +112,18 @@ def start(args: Args) -> None:
                 args.device,
                 args.verbose,
                 args.port,
+                image_reader,
             )
         elif args.gui:
             from gui import run_gui
 
+            easyocr_lang = [
+                lang
+                for code, lang in get_easyocr_language_map().items()
+                if code == args.language
+            ]
+
+            image_reader = easyocr.Reader(easyocr_lang)
             run_gui(
                 pipeline,
                 args.language,
@@ -118,6 +131,7 @@ def start(args: Args) -> None:
                 args.speed,
                 args.device,
                 args.theme,
+                image_reader,
             )
         elif args.all_voices and args.input_text:
             run_with_all(
@@ -169,15 +183,11 @@ def run_daemon(
     device: Optional[str],
     verbose: bool,
     port: int,
+    image_reader: easyocr.Reader,
 ) -> None:
     """Start daemon mode"""
     current_thread = None
     player = TTSPlayer(pipeline, language, voice, speed, verbose)
-    easyocr_lang = [
-        lang for code, lang in get_easyocr_language_map().items() if code == language
-    ]
-
-    reader = easyocr.Reader(easyocr_lang)
 
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
@@ -199,7 +209,7 @@ def run_daemon(
                         data += chunk
 
                     if data.startswith(b"IMAGE:"):
-                        results = reader.readtext(data[6:])
+                        results = image_reader.readtext(data[6:])
                         clipboard_data = ""
                         clipboard_data = " ".join(
                             text for _, text, _ in results if text
@@ -222,6 +232,13 @@ def run_daemon(
                     if cmd == "!lang":
                         if player.change_language(arg, device):
                             print(f"Language changed to: {player.languages[arg]}")
+
+                            easyocr_lang = [
+                                lang
+                                for code, lang in get_easyocr_language_map().items()
+                                if code == arg
+                            ]
+                            image_reader = easyocr.Reader(easyocr_lang)
                         else:
                             print("Invalid language code.")
 
