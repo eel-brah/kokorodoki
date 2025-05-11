@@ -247,12 +247,12 @@ def send(
         send_clipboard()
         return
 
+    if language is not None:
+        send_language(language)
     if speed is not None:
         send_speed(speed)
     if voice is not None:
         send_voice(voice)
-    if language is not None:
-        send_language(language)
     if status:
         send_action("!status")
 
