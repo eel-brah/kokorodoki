@@ -33,9 +33,11 @@ class Gui:
         voice: str,
         speed: float,
         device: Optional[str],
-        image_reader: easyocr.Reader
+        image_reader: easyocr.Reader,
+        dark_theme: bool,
     ):
         self.root = root
+        self.dark_theme = dark_theme
         self.languages = [lang for _, lang in get_language_map().items()]
         self.voices = get_voices()
         self.current_language_code = language
@@ -288,14 +290,16 @@ class Gui:
         title_frame.grid(row=0, column=0, sticky="ew", pady=(0, 15))
         title_frame.columnconfigure(2, weight=1)
 
+        style = "light" if self.dark_theme else "dark"
         title_label = ttk.Label(
             title_frame,
             text="KokoroDoki",
             font=(self.default_font, 18, "bold"),
-            bootstyle="light",
+            bootstyle=style,
         )
         title_label.grid(row=0, column=0, sticky="w")
 
+        style = "secondary" if self.dark_theme else "default"
         subtitle_label = ttk.Label(
             title_frame,
             text="Text-to-Speech Reader",
@@ -327,41 +331,46 @@ class Gui:
         version_label.grid(row=0, column=2, sticky="e")
 
     def choose_file(self):
-        file_path = tk.filedialog.askopenfilename(
-            title="Select a File",
-            filetypes=[("All files", "*.*"), ("Text files", "*.txt")],
-        )
-        if file_path:
-            self.file_path_var.set(f"File: {file_path}")
         try:
-            image_extensions = [
-                ".png",
-                ".jpg",
-                ".jpeg",
-                ".webp",
-                ".bmp",
-                ".tiff",
-                ".tif",
-            ]
-            _, file_ext = os.path.splitext(file_path.lower())
+            file_path = tk.filedialog.askopenfilename(
+                title="Select a Text file of an image",
+                filetypes=[("All files", "*.*"), ("Text files", "*.txt")],
+            )
+            if file_path:
+                self.file_path_var.set(f"File: {file_path}")
+                try:
+                    image_extensions = [
+                        ".png",
+                        ".jpg",
+                        ".jpeg",
+                        ".webp",
+                        ".bmp",
+                        ".tiff",
+                        ".tif",
+                    ]
+                    _, file_ext = os.path.splitext(file_path.lower())
 
-            if file_ext in image_extensions:
-                self.text_area.delete(1.0, tk.END)
-                results = self.reader.readtext(file_path)
-                image_text = ""
-                image_text = " ".join(text for _, text, _ in results if text).strip()
+                    if file_ext in image_extensions:
+                        self.text_area.delete(1.0, tk.END)
+                        results = self.reader.readtext(file_path)
+                        image_text = ""
+                        image_text = " ".join(
+                            text for _, text, _ in results if text
+                        ).strip()
 
-                self.text_area.insert(
-                    tk.END,
-                    image_text,
-                )
-            else:
-                with open(file_path, "r", encoding="utf-8") as file:
+                        self.text_area.insert(
+                            tk.END,
+                            image_text,
+                        )
+                    else:
+                        with open(file_path, "r", encoding="utf-8") as file:
+                            self.text_area.delete(1.0, tk.END)
+                            self.text_area.insert(tk.END, file.read())
+                except Exception as e:
                     self.text_area.delete(1.0, tk.END)
-                    self.text_area.insert(tk.END, file.read())
+                    self.text_area.insert(tk.END, f"Error reading file: {str(e)}")
         except Exception as e:
-            self.text_area.delete(1.0, tk.END)
-            self.text_area.insert(tk.END, f"Error reading file: {str(e)}")
+            print(f"An error occurred: {e}")
 
     def add_text_area(self, container):
         """Create text area"""
@@ -397,7 +406,7 @@ class Gui:
 
         # Create a StringVar to hold the file path
         self.file_path_var = tk.StringVar()
-        self.file_path_var.set("No file selected")
+        self.file_path_var.set("No file or image selected")
 
         # Entry to display the file path
         file_path_display = ttk.Entry(
@@ -620,7 +629,7 @@ def run_gui(
     speed: float,
     device: Optional[str],
     theme: int,
-    image_reader: easyocr.Reader
+    image_reader: easyocr.Reader,
 ) -> None:
     """Start gui mode"""
     try:
@@ -631,7 +640,11 @@ def run_gui(
         root.columnconfigure(0, weight=1)
         root.rowconfigure(0, weight=1)
 
-        app = Gui(root, pipeline, language, voice, speed, device, image_reader)
+        # Check if it is a Dark or Light theme
+        dark_theme = 1 <= theme <= 4
+        app = Gui(
+            root, pipeline, language, voice, speed, device, image_reader, dark_theme
+        )
 
         def on_closing():
             if messagebox.askokcancel("Quit", "Do you want to quit?"):

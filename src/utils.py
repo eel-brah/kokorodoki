@@ -101,10 +101,16 @@ def get_voices() -> List[str]:
 def get_gui_themes() -> Dict[int, str]:
     """Return the available gui themes"""
     return {
+        # Dark themes
         1: "darkly",
         2: "cyborg",
         3: "solar",
         4: "vapor",
+
+        # Light themes
+        5: "cosmo",
+        6: "pulse",
+        7: "morph",
     }
 
 
@@ -114,9 +120,10 @@ def display_themes() -> None:
     table = Table(title="Available Themes", box=box.ROUNDED)
     table.add_column("Number", style="cyan")
     table.add_column("Theme", style="green")
+    table.add_column("Style", style="green")
 
     for number, name in themes.items():
-        table.add_row(str(number), name)
+        table.add_row(str(number), name, "Dark" if 1 <= number <= 4 else "Light")
 
     console.print(table)
 
