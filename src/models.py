@@ -59,9 +59,10 @@ class TTSPlayer:
             self.pipeline = KPipeline(
                 lang_code=self.language, repo_id=REPO_ID, device=device
             )
-            self.change_voice(
-                next(voice for voice in get_voices() if voice.startswith(new_lang))
-            )
+            if not self.voice.startswith(new_lang):
+                self.change_voice(
+                    next(voice for voice in get_voices() if voice.startswith(new_lang))
+                )
             self.nltk_language = get_nltk_language(self.language)
             return True
         return False

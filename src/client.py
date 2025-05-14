@@ -38,17 +38,24 @@ ACTION_COMMANDS = {
 }
 
 
-def get_clipboard() -> Optional[str]:
+def get_clipboard() -> Optional[str | bytes]:
     """Get clipboard content"""
     try:
-        result = subprocess.run(
-            ["xclip", "-selection", "clipboard", "-o"],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        return result.stdout.strip()
-
+        try:
+            result = subprocess.run(
+                ["xclip", "-selection", "clipboard", "-o"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            return result.stdout.strip()
+        except subprocess.CalledProcessError:
+            result = subprocess.run(
+                ["xclip", "-selection", "clipboard", "-t", "image/png", "-o"],
+                capture_output=True,
+                check=True,
+            )
+            return result.stdout
     except subprocess.CalledProcessError as e:
         print(f"Error reading clipboard: {e}")
         print(f"Command returned {e.returncode}")
@@ -65,10 +72,14 @@ def get_clipboard() -> Optional[str]:
 def send_clipboard() -> None:
     """Send clipboard content"""
     clipboard_content = get_clipboard()
+
     if clipboard_content is not None:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
             client_socket.connect((HOST, PORT))
-            client_socket.sendall(clipboard_content.encode())
+            if isinstance(clipboard_content, bytes):
+                client_socket.sendall(b"IMAGE:" + clipboard_content)
+            else:
+                client_socket.sendall(b"TEXT:" + clipboard_content.encode())
 
 
 def send_action(action: str) -> None:

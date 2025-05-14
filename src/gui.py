@@ -1,3 +1,4 @@
+import os
 import queue
 import signal
 import threading
@@ -5,6 +6,7 @@ import tkinter as tk
 from tkinter import messagebox
 from typing import Dict, Optional
 
+import easyocr
 import ttkbootstrap as ttk
 from kokoro import KPipeline
 from ttkbootstrap.tooltip import ToolTip
@@ -12,6 +14,7 @@ from ttkbootstrap.tooltip import ToolTip
 from config import MAX_SPEED, MIN_SPEED, TITLE, VERSION, WINDOW_SIZE
 from models import TTSPlayer
 from utils import (
+    get_easyocr_language_map,
     get_gui_themes,
     get_language_map,
     get_nltk_language,
@@ -30,8 +33,11 @@ class Gui:
         voice: str,
         speed: float,
         device: Optional[str],
+        image_reader: easyocr.Reader,
+        dark_theme: bool,
     ):
         self.root = root
+        self.dark_theme = dark_theme
         self.languages = [lang for _, lang in get_language_map().items()]
         self.voices = get_voices()
         self.current_language_code = language
@@ -49,6 +55,8 @@ class Gui:
         self.prev_sentences = []
         self.nltk_language = get_nltk_language(self.current_language_code)
         self.sentence_indices = []
+
+        self.reader = image_reader
 
         self.queue = queue.Queue()
         self.root.after(100, self.process_queue)
@@ -106,16 +114,24 @@ class Gui:
         self.player.change_language(self.current_language_code, self.device)
         self.status_label.config(text=f"Language set to: {self.current_language}")
 
+        easyocr_lang = [
+            lang
+            for code, lang in get_easyocr_language_map().items()
+            if code == self.current_language_code
+        ]
+        self.reader = easyocr.Reader(easyocr_lang)
+
         self.nltk_language = get_nltk_language(self.current_language_code)
 
         # Update voice menu
-        voice_menu["values"] = [
-            voice
-            for voice in self.voices
-            if voice.startswith(self.current_language_code)
-        ]
-        self.voice_var.set(voice_menu["values"][0])
-        self.change_voice(event)
+        if not self.current_voice.startswith(self.current_language_code):
+            voice_menu["values"] = [
+                voice
+                for voice in self.voices
+                if voice.startswith(self.current_language_code)
+            ]
+            self.voice_var.set(voice_menu["values"][0])
+            self.current_voice = self.voice_var.get()
 
     def play_speech(self) -> None:
         """Play or resume if it was paused"""
@@ -274,14 +290,16 @@ class Gui:
         title_frame.grid(row=0, column=0, sticky="ew", pady=(0, 15))
         title_frame.columnconfigure(2, weight=1)
 
+        style = "light" if self.dark_theme else "dark"
         title_label = ttk.Label(
             title_frame,
             text="KokoroDoki",
             font=(self.default_font, 18, "bold"),
-            bootstyle="light",
+            bootstyle=style,
         )
         title_label.grid(row=0, column=0, sticky="w")
 
+        style = "secondary" if self.dark_theme else "default"
         subtitle_label = ttk.Label(
             title_frame,
             text="Text-to-Speech Reader",
@@ -312,6 +330,48 @@ class Gui:
         )
         version_label.grid(row=0, column=2, sticky="e")
 
+    def choose_file(self):
+        try:
+            file_path = tk.filedialog.askopenfilename(
+                title="Select a Text file of an image",
+                filetypes=[("All files", "*.*"), ("Text files", "*.txt")],
+            )
+            if file_path:
+                self.file_path_var.set(f"File: {file_path}")
+                try:
+                    image_extensions = [
+                        ".png",
+                        ".jpg",
+                        ".jpeg",
+                        ".webp",
+                        ".bmp",
+                        ".tiff",
+                        ".tif",
+                    ]
+                    _, file_ext = os.path.splitext(file_path.lower())
+
+                    if file_ext in image_extensions:
+                        self.text_area.delete(1.0, tk.END)
+                        results = self.reader.readtext(file_path)
+                        image_text = ""
+                        image_text = " ".join(
+                            text for _, text, _ in results if text
+                        ).strip()
+
+                        self.text_area.insert(
+                            tk.END,
+                            image_text,
+                        )
+                    else:
+                        with open(file_path, "r", encoding="utf-8") as file:
+                            self.text_area.delete(1.0, tk.END)
+                            self.text_area.insert(tk.END, file.read())
+                except Exception as e:
+                    self.text_area.delete(1.0, tk.END)
+                    self.text_area.insert(tk.END, f"Error reading file: {str(e)}")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
     def add_text_area(self, container):
         """Create text area"""
         text_frame = ttk.LabelFrame(container, text="Text Content", padding=10)
@@ -334,12 +394,34 @@ class Gui:
         text_scroll.grid(row=0, column=1, sticky="ns")
         self.text_area.configure(yscrollcommand=text_scroll.set)
 
+        # File selector
+        button_frame = ttk.Frame(text_frame)
+        button_frame.grid(row=1, column=0, columnspan=2, sticky="ew", pady=5)
+        button_frame.columnconfigure(1, weight=1)
+
+        choose_button = ttk.Button(
+            button_frame, text="Choose File", command=self.choose_file
+        )
+        choose_button.grid(row=0, column=0, sticky="w", padx=(0, 10))
+
+        # Create a StringVar to hold the file path
+        self.file_path_var = tk.StringVar()
+        self.file_path_var.set("No file or image selected")
+
+        # Entry to display the file path
+        file_path_display = ttk.Entry(
+            button_frame,
+            textvariable=self.file_path_var,
+            state="readonly",
+        )
+        file_path_display.grid(row=0, column=1, sticky="ew")
+
         # Add placeholder text
         self.add_place_holder()
 
     def add_place_holder(self):
         """Add placeholder text"""
-        placeholder = "Enter or paste your text here..."
+        placeholder = "Type or select a file..."
         self.text_area.insert("1.0", placeholder)
         self.text_area.tag_add("placeholder", "1.0", "end")
         self.text_area.tag_config("placeholder", foreground="gray")
@@ -529,7 +611,6 @@ class Gui:
             self.current_thread.join()
 
 
-
 def setup_signal_handler(root, app):
     """Set up a signal handler for SIGINT (Ctrl+C) to close the Tkinter window."""
 
@@ -548,6 +629,7 @@ def run_gui(
     speed: float,
     device: Optional[str],
     theme: int,
+    image_reader: easyocr.Reader,
 ) -> None:
     """Start gui mode"""
     try:
@@ -558,7 +640,11 @@ def run_gui(
         root.columnconfigure(0, weight=1)
         root.rowconfigure(0, weight=1)
 
-        app = Gui(root, pipeline, language, voice, speed, device)
+        # Check if it is a Dark or Light theme
+        dark_theme = 1 <= theme <= 4
+        app = Gui(
+            root, pipeline, language, voice, speed, device, image_reader, dark_theme
+        )
 
         def on_closing():
             if messagebox.askokcancel("Quit", "Do you want to quit?"):
