@@ -114,12 +114,12 @@ Python3.12, portaudio, espeak and xclip:
 
 For Debian/Ubuntu:
 ```bash
-sudo apt update && sudo apt install -y python3.12 python3.12-dev python3.12-venv espeak portaudio19-dev xclip
+sudo apt update && sudo apt install -y python3.12 python3.12-dev python3.12-venv python3.12-tkinter espeak portaudio19-dev xclip
 ```
 
 For Fedora/RHEL/CentOS:
 ```bash
-sudo dnf install -y python3.12 python3.12-devel python3-virtualenv portaudio espeak xclip
+sudo dnf install -y python3.12 python3.12-devel python3-virtualenv python3.12-tkinter portaudio espeak xclip
 ```
 
 #### Installation
@@ -157,6 +157,7 @@ chmod +x ~/.local/bin/doki
 # Integrate with systemd for better control (Daemon mode)
 mkdir -p ~/.config/systemd/user/
 cp ~/.local/bin/kdoki/kokorodoki.service ~/.config/systemd/user/
+systemctl --user daemon-reload
 systemctl --user enable kokorodoki.service
 systemctl --user start kokorodoki.service
 systemctl --user status kokorodoki.service
@@ -167,6 +168,24 @@ systemctl --user status kokorodoki.service
 doki
 
 # Create custom shortcuts for more convenience experience
+
+# Send from clipboard
+~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py
+
+# Stop playback 
+~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py --stop
+
+# Pause playback
+~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py --pause
+
+# Resume playback
+~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py --resume
+
+# Skip to next sentence
+~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py --next
+
+# Go back a sentence
+~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py --back
 ```
 
 #### Optional: Language Support Packages
@@ -334,9 +353,13 @@ Runs in the background and receives text or commands via `client.py`.
 kokorodoki --daemon 
 ```
 
-To send a text, copy the desired text and run `client.py` 
+To send a text, copy the desired text and run `client.py` or `doki`
 
 ```bash
+~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py
+
+or
+
 doki
 ```
 
