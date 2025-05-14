@@ -29,9 +29,9 @@ https://github.com/user-attachments/assets/103b6bd0-0010-4c3d-a373-cf4b218a05a0
 
   * [Examples](#examples)
   * [Command-Line Arguments](#command-line-arguments)
-  * [1/4. 💥 Console Mode (Interactive Terminal)](#14--console-mode-interactive-terminal)
-  * [2/4. 🖌️ GUI Mode](#24--gui-mode)
-  * [3/4. 🛠️ Daemon Mode (Background Service)](#34--daemon-mode-background-service)
+  * [1/4. 💥 Console Mode (Interactive Terminal)](#14-%EF%B8%8F-console-mode-interactive-terminal)
+  * [2/4. 🖌️ GUI Mode](#24-%EF%B8%8F-gui-mode)
+  * [3/4. 🛠️ Daemon Mode (Background Service)](#34-%EF%B8%8F-daemon-mode-background-service)
   * [4/4. ⚡ CLI Mode (One-Shot)](#44--cli-mode-one-shot)
 * [Core Dependencies](#core-dependencies)
 * [Contribute](#-contribute)
