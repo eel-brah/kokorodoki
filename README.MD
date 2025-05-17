@@ -16,17 +16,17 @@ https://github.com/user-attachments/assets/103b6bd0-0010-4c3d-a373-cf4b218a05a0
 
 * [Features](#features)
 * [🌐 Language & Voice Availability](#-language--voice-availability)
-* [Installation](#installation)
+* [Setup](#setup)
 
   * [Requirements](#requirements)
   * [Setup Instructions](#setup-instructions)
 
-    * [Requirements](#requirements)
-    * [Installation](#installation-1)
-    * [Integrate with systemd](#integrate-with-systemd)
-    * [Optional: Language Support Packages](#optional-language-support-packages)
+    * [Dependencies](#1-dependencies)
+    * [Install CUDA Toolkit](#2-install-cuda-toolkit)
+    * [Installation](#3-installation)
+    * [Integrate with systemd](#4-integrate-with-systemd)
+    * [Optional: Language Support Packages](#5-optional-language-support-packages)
 * [Usage](#usage)
-Setup Instructions
   * [Examples](#examples)
   * [Command-Line Arguments](#command-line-arguments)
   * [1/4. 💥 Console Mode (Interactive Terminal)](#14-%EF%B8%8F-console-mode-interactive-terminal)
@@ -86,16 +86,16 @@ Setup Instructions
 | Spanish              | 3      |
 | French               | 1      |
 | Hindi                | 4      |
-| Italian              | 2      |
+| Italian              | 2      |-1
 | Brazilian Portuguese | 3      |
 | Japanese             | 5      |
 | Mandarin Chinese     | 8      |
 
 ---
 
-## 🚀 Installation
+## 🚀 Setup
 
-### 🔧 Requirements
+### Requirements
 
 Make sure you have the following installed (see below for a guide):
 
@@ -107,9 +107,9 @@ Make sure you have the following installed (see below for a guide):
 * **Clipboard Support (for Daemon Mode)**: `xclip`
 Setup Instructions
 
-#### Setup Instructions
+### Setup Instructions
 
-##### 1. Install System Dependencies
+#### 1. Dependencies
 
 **For Debian-based/Ubuntu systems:**
 
@@ -127,12 +127,12 @@ sudo dnf install -y \
   portaudio espeak xclip
 ```
 
-##### 2. Install CUDA Toolkit
+#### 2. Install CUDA Toolkit
 
 Follow the official guide to install the [CUDA Toolkit](https://developer.nvidia.com/cuda-toolkit) compatible with your GPU and OS.
 
 
-### Installation
+#### 3. Installation
 
 ```bash
 
@@ -161,7 +161,7 @@ cp ~/.local/bin/kdoki/doki ~/.local/bin
 chmod +x ~/.local/bin/doki
 ```
 
-#### Integrate with systemd
+#### 4. Integrate with systemd
 
 ```bash
 # Integrate with systemd for better control (Daemon mode)
@@ -198,7 +198,7 @@ doki
 ~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py --back
 ```
 
-#### Optional: Language Support Packages
+#### 5. Optional: Language Support Packages
 
 ```bash
 # For Japanese
