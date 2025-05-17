@@ -21,19 +21,19 @@ https://github.com/user-attachments/assets/103b6bd0-0010-4c3d-a373-cf4b218a05a0
   * [Requirements](#requirements)
   * [Setup Instructions](#setup-instructions)
 
-    * [Dependencies](#dependencies)
+    * [Requirements](#requirements)
     * [Installation](#installation-1)
     * [Integrate with systemd](#integrate-with-systemd)
     * [Optional: Language Support Packages](#optional-language-support-packages)
 * [Usage](#usage)
-
+Setup Instructions
   * [Examples](#examples)
   * [Command-Line Arguments](#command-line-arguments)
   * [1/4. 💥 Console Mode (Interactive Terminal)](#14-%EF%B8%8F-console-mode-interactive-terminal)
   * [2/4. 🖌️ GUI Mode](#24-%EF%B8%8F-gui-mode)
   * [3/4. 🛠️ Daemon Mode (Background Service)](#34-%EF%B8%8F-daemon-mode-background-service)
   * [4/4. ⚡ CLI Mode (One-Shot)](#44--cli-mode-one-shot)
-* [Core Dependencies](#core-dependencies)
+* [Core Dependencies](#core-dRequirementsependencies)
 * [Contribute](#-contribute)
 * [License](#-license)
 
@@ -105,11 +105,11 @@ Make sure you have the following installed (see below for a guide):
 * **Build Tools**: `python3.12-dev`, `python3.12-virtualenv`
 * **Python interface to the Tcl/Tk GUI toolkit**: `python3.12-tkinter`
 * **Clipboard Support (for Daemon Mode)**: `xclip`
+Setup Instructions
 
+#### Setup Instructions
 
-### Setup Instructions
-
-#### 1. Install System Dependencies
+##### 1. Install System Dependencies
 
 **For Debian-based/Ubuntu systems:**
 
@@ -127,12 +127,12 @@ sudo dnf install -y \
   portaudio espeak xclip
 ```
 
-#### 2. Install CUDA Toolkit
+##### 2. Install CUDA Toolkit
 
 Follow the official guide to install the [CUDA Toolkit](https://developer.nvidia.com/cuda-toolkit) compatible with your GPU and OS.
 
 
-#### Installation
+### Installation
 
 ```bash
 
