@@ -93,34 +93,44 @@ https://github.com/user-attachments/assets/103b6bd0-0010-4c3d-a373-cf4b218a05a0
 
 ---
 
-## Installation
+## 🚀 Installation
 
-### Requirements
+### 🔧 Requirements
+
+Make sure you have the following installed (see below for a guide):
 
 * **Python**: 3.12
-* **CUDA**: [cuda-toolkit](https://developer.nvidia.com/cuda-toolkit)
-* **Audio/Voice Tools**: `portaudio`, `espeak`
-* **Build Tools**: `python3-dev` `python3-virtualenv`
+* **CUDA Toolkit**: [cuda-toolkit](https://developer.nvidia.com/cuda-toolkit)
+* **Audio & Voice Tools**: `portaudio`, `espeak`
+* **Build Tools**: `python3.12-dev`, `python3.12-virtualenv`
+* **Python interface to the Tcl/Tk GUI toolkit**: `python3.12-tkinter`
 * **Clipboard Support (for Daemon Mode)**: `xclip`
 
 
 ### Setup Instructions
 
-#### Dependencies 
+#### 1. Install System Dependencies
 
-CUDA: [Install cuda-toolkit](https://developer.nvidia.com/cuda-toolkit)
+**For Debian-based/Ubuntu systems:**
 
-Python3.12, portaudio, espeak and xclip:
-
-For Debian/Ubuntu:
 ```bash
-sudo apt update && sudo apt install -y python3.12 python3.12-dev python3.12-venv python3.12-tkinter espeak portaudio19-dev xclip
+sudo apt update && sudo apt install -y \
+  python3.12 python3.12-dev python3.12-venv python3.12-tk \
+  portaudio19-dev espeak xclip
 ```
 
-For Fedora/RHEL/CentOS:
+**For Fedora/RHEL/CentOS systems:**
+
 ```bash
-sudo dnf install -y python3.12 python3.12-devel python3-virtualenv python3.12-tkinter portaudio espeak xclip
+sudo dnf install -y \
+  python3.12 python3.12-devel python3-virtualenv python3.12-tkinter \
+  portaudio espeak xclip
 ```
+
+#### 2. Install CUDA Toolkit
+
+Follow the official guide to install the [CUDA Toolkit](https://developer.nvidia.com/cuda-toolkit) compatible with your GPU and OS.
+
 
 #### Installation
 
