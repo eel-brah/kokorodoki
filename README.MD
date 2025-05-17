@@ -16,7 +16,7 @@ https://github.com/user-attachments/assets/103b6bd0-0010-4c3d-a373-cf4b218a05a0
 
 * [Features](#features)
 * [🌐 Language & Voice Availability](#-language--voice-availability)
-* [Setup](#setup)
+* [Setup](#-setup)
 
   * [Requirements](#requirements)
   * [Setup Instructions](#setup-instructions)
