@@ -104,7 +104,7 @@ Make sure you have the following installed (see below for a guide):
 * **Audio & Voice Tools**: `portaudio`, `espeak`
 * **Build Tools**: `python3.12-dev`, `python3.12-virtualenv`
 * **Python interface to the Tcl/Tk GUI toolkit**: `python3.12-tkinter`
-* **Clipboard Support (for Daemon Mode)**: `xclip`
+* **Clipboard Support (for Daemon Mode)**: `xclip` or `wl-clipboard` for Wayland
 Setup Instructions
 
 ### Setup Instructions
@@ -116,7 +116,7 @@ Setup Instructions
 ```bash
 sudo apt update && sudo apt install -y \
   python3.12 python3.12-dev python3.12-venv python3.12-tk \
-  portaudio19-dev espeak xclip
+  portaudio19-dev espeak wl-clipboard
 ```
 
 **For Fedora/RHEL/CentOS systems:**
@@ -124,7 +124,7 @@ sudo apt update && sudo apt install -y \
 ```bash
 sudo dnf install -y \
   python3.12 python3.12-devel python3-virtualenv python3.12-tkinter \
-  portaudio espeak xclip
+  portaudio espeak wl-clipboard
 ```
 
 #### 2. Install CUDA Toolkit
