@@ -1,4 +1,5 @@
 import argparse
+import os
 import socket
 import subprocess
 import sys
@@ -39,34 +40,65 @@ ACTION_COMMANDS = {
 
 
 def get_clipboard() -> Optional[str | bytes]:
-    """Get clipboard content"""
-    try:
+    """Get clipboard content on X11 or Wayland"""
+    is_wayland = os.environ.get("WAYLAND_DISPLAY") is not None
+
+    if is_wayland:
         try:
-            result = subprocess.run(
-                ["xclip", "-selection", "clipboard", "-o"],
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-            return result.stdout.strip()
-        except subprocess.CalledProcessError:
-            result = subprocess.run(
-                ["xclip", "-selection", "clipboard", "-t", "image/png", "-o"],
-                capture_output=True,
-                check=True,
-            )
-            return result.stdout
-    except subprocess.CalledProcessError as e:
-        print(f"Error reading clipboard: {e}")
-        print(f"Command returned {e.returncode}")
-        print(f"Error output: {e.stderr}")
-        return None
-    except FileNotFoundError:
-        print("Error: xclip is not installed. Please install it first.")
-        return None
-    except Exception as e:
-        print(f"Unexpected error: {e}")
-        return None
+            try:
+                result = subprocess.run(
+                    ["wl-paste", "--no-newline"],
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                )
+                return result.stdout
+            except UnicodeDecodeError:
+                result = subprocess.run(
+                    ["wl-paste", "--type", "image/png"],
+                    capture_output=True,
+                    check=True,
+                )
+                return result.stdout
+        except subprocess.CalledProcessError as e:
+            print(f"Error reading Wayland clipboard: {e}")
+            print(f"Command returned {e.returncode}")
+            print(f"Error output: {e.stderr}")
+            return None
+        except FileNotFoundError:
+            print("Error: wl-paste is not installed. Please install wl-clipboard.")
+            return None
+        except Exception as e:
+            print(f"Unexpected error on Wayland: {e}")
+            return None
+    else:
+        try:
+            try:
+                result = subprocess.run(
+                    ["xclip", "-selection", "clipboard", "-o"],
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                )
+                return result.stdout.strip()
+            except subprocess.CalledProcessError:
+                result = subprocess.run(
+                    ["xclip", "-selection", "clipboard", "-t", "image/png", "-o"],
+                    capture_output=True,
+                    check=True,
+                )
+                return result.stdout
+        except subprocess.CalledProcessError as e:
+            print(f"Error reading X11 clipboard: {e}")
+            print(f"Command returned {e.returncode}")
+            print(f"Error output: {e.stderr}")
+            return None
+        except FileNotFoundError:
+            print("Error: xclip is not installed. Please install it first.")
+            return None
+        except Exception as e:
+            print(f"Unexpected error on X11: {e}")
+            return None
 
 
 def send_clipboard() -> None:

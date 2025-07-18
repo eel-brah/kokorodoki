@@ -366,32 +366,31 @@ def split_long_sentence(sentence: str, max_len=350, min_len=50) -> List[str]:
     chunks = []
 
     # Split by newline
-    newline_chunks = sentence.split("\n")
-    for chunk in newline_chunks:
-        if len(chunk) <= max_len:
-            chunks.append(chunk)
+    chunk = sentence
+    if len(chunk) <= max_len:
+        chunks.append(chunk)
+    else:
+        # Split by "[,;]\s"
+        split_points = [m.start() for m in re.finditer(r"[,;]\s", chunk)]
+        if split_points:
+            last_pos = 0
+            for pos in split_points:
+                next_pos = pos + 2
+                segment = chunk[last_pos:next_pos]
+                if len(segment) > max_len:
+                    # For too long segments
+                    chunks.extend(split_by_words(segment, max_len))
+                elif len(segment) < min_len and last_pos > 0:
+                    # Merge short segment with previous chunk
+                    chunks[-1] += segment
+                else:
+                    chunks.append(segment)
+                last_pos = next_pos
+            # Handle remaining text
+            if last_pos < len(chunk):
+                chunks.extend(split_by_words(chunk[last_pos:], max_len))
         else:
-            # Split by "[,;]\s"
-            split_points = [m.start() for m in re.finditer(r"[,;]\s", chunk)]
-            if split_points:
-                last_pos = 0
-                for pos in split_points:
-                    next_pos = pos + 2
-                    segment = chunk[last_pos:next_pos]
-                    if len(segment) > max_len:
-                        # For too long segments
-                        chunks.extend(split_by_words(segment, max_len))
-                    elif len(segment) < min_len and last_pos > 0:
-                        # Merge short segment with previous chunk
-                        chunks[-1] += segment
-                    else:
-                        chunks.append(segment)
-                    last_pos = next_pos
-                # Handle remaining text
-                if last_pos < len(chunk):
-                    chunks.extend(split_by_words(chunk[last_pos:], max_len))
-            else:
-                chunks.extend(split_by_words(chunk, max_len))
+            chunks.extend(split_by_words(chunk, max_len))
 
     for i, chunk in enumerate(chunks):
         if len(chunk) > max_len:
@@ -429,7 +428,7 @@ def split_text_to_sentences(text: str, language: str) -> List[str]:
         if len(sentence) > 350:
             new_sentences.extend(split_long_sentence(sentence, max_len=350))
         else:
-            new_sentences.extend(sentence.split('\n'))
+            new_sentences.extend([sentence])
 
     # new_sentences = merge_short_sentences(new_sentences, min_len=50, max_len=300)
     return new_sentences
