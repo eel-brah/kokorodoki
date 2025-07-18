@@ -105,7 +105,6 @@ Make sure you have the following installed (see below for a guide):
 * **Build Tools**: `python3.12-dev`, `python3.12-virtualenv`
 * **Python interface to the Tcl/Tk GUI toolkit**: `python3.12-tkinter`
 * **Clipboard Support (for Daemon Mode)**: `xclip` or `wl-clipboard` for Wayland
-Setup Instructions
 
 ### Setup Instructions
 
