@@ -1,7 +1,12 @@
 import os
+import platform
 import re
-import readline
 from typing import Dict, List, Optional
+
+if platform.system() == "Windows":
+    import pyreadline3 as readline
+else:
+    import readline
 
 from nltk import sent_tokenize
 from rich import box
@@ -24,6 +29,7 @@ def get_language_map() -> Dict[str, str]:
         "z": "Mandarin Chinese",
     }
 
+
 def get_easyocr_language_map() -> Dict[str, str]:
     """Return the available languages for EasyOCR"""
     return {
@@ -37,6 +43,7 @@ def get_easyocr_language_map() -> Dict[str, str]:
         "j": "ja",
         "z": "ch_sim",
     }
+
 
 def get_voices() -> List[str]:
     """Return the available voices"""
@@ -106,7 +113,6 @@ def get_gui_themes() -> Dict[int, str]:
         2: "cyborg",
         3: "solar",
         4: "vapor",
-
         # Light themes
         5: "cosmo",
         6: "pulse",
@@ -290,14 +296,17 @@ def display_help() -> None:
 
 def clear_history() -> None:
     readline.clear_history()
-    try:
-        readline.write_history_file(HISTORY_FILE)
-    except IOError:
-        pass
+    if platform.system() != "Windows":
+        try:
+            readline.write_history_file(HISTORY_FILE)
+        except IOError:
+            pass
     console.print("[bold yellow]History cleared.[/]")
 
 
 def save_history(history_off: bool) -> None:
+    if platform.system() == "Windows":
+        return
     if not history_off:
         try:
             readline.write_history_file(HISTORY_FILE)
@@ -307,6 +316,8 @@ def save_history(history_off: bool) -> None:
 
 def init_history(history_off: bool) -> None:
     """Load history file and set the limit"""
+    if platform.system() == "Windows":
+        return
     if not history_off:
         if os.path.exists(HISTORY_FILE):
             try:
@@ -317,6 +328,8 @@ def init_history(history_off: bool) -> None:
 
 
 def init_completer() -> None:
+    if platform.system() == "Windows":
+        return
     readline.parse_and_bind("tab: complete")
     readline.set_completer(completer)
     readline.set_completer_delims("")
@@ -325,6 +338,8 @@ def init_completer() -> None:
 
 def completer(text: str, state: int) -> Optional[str]:
     """Auto-complete function for readline."""
+    if platform.system() == "Windows":
+        return None
     options = [cmd for cmd in COMMANDS if cmd.startswith(text)]
     return options[state] if state < len(options) else None
 

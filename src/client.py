@@ -1,10 +1,14 @@
 import argparse
 import os
+import platform
 import socket
 import subprocess
 import sys
 from enum import Enum
 from typing import Optional, Tuple
+
+if platform.system() == "Windows":
+    import pyperclip
 
 from config import DEFAULT_LANGUAGE, HOST, MAX_SPEED, MIN_SPEED, PORT
 from utils import display_languages, display_voices, get_language_map, get_voices
@@ -40,7 +44,16 @@ ACTION_COMMANDS = {
 
 
 def get_clipboard() -> Optional[str | bytes]:
-    """Get clipboard content on X11 or Wayland"""
+    """Get clipboard content, supporting Windows, X11, and Wayland"""
+
+    if platform.system() == "Windows":
+        # On Windows use pyperclip
+        try:
+            return pyperclip.paste()
+        except pyperclip.PyperclipException as e:
+            print(f"Error reading clipboard on Windows: {e}")
+            return None
+
     is_wayland = os.environ.get("WAYLAND_DISPLAY") is not None
 
     if is_wayland:

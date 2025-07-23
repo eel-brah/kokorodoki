@@ -260,9 +260,7 @@ class TTSPlayer:
         """Resume playback."""
         self.audio_player.resume()
 
-    def speak(
-        self, text: str | list, console_mode=True, gui_highlight=None
-    ) -> None:
+    def speak(self, text: str | list, console_mode=True, gui_highlight=None) -> None:
         """Start TTS generation and playback in separate threads."""
 
         self.stop_event.clear()

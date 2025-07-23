@@ -108,6 +108,8 @@ Make sure you have the following installed (see below for a guide):
 
 ### Setup Instructions
 
+> For Windows instructions, see [windows.md](windows.md).
+
 #### 1. Dependencies
 
 **For Debian-based/Ubuntu systems:**
@@ -215,6 +217,8 @@ pip install ordered_set pypinyin jieba cn2an
 ```bash
 # Launch with default mode (Console mode) and default settings
 kokorodoki
+
+# The first run may take some time as it downloads the AI model.
 
 # OR, if you didn't follow the setup steps above:
 # Use the path to your virtual environment and the path to where you cloned

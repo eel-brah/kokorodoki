@@ -32,7 +32,7 @@ COMMANDS = [
     "!ctrlc",
     "!status",
 ]
-HOST = "0.0.0.0"
+HOST = "127.0.0.1"
 PORT = 5561
 TITLE = "KokoroDoki"
 WINDOW_SIZE = "700x600"

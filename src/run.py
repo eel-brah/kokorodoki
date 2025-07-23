@@ -5,7 +5,6 @@ import time
 import warnings
 from typing import Optional
 
-
 from config import (
     DEFAULT_LANGUAGE,
     DEFAULT_SPEED,
@@ -45,8 +44,8 @@ with console.status(
     from kokoro import KPipeline
 console.print("[bold green]Kokoro initialized!")
 
-import nltk
 import easyocr
+import nltk
 
 from input_hander import Args, get_input
 from models import TTSPlayer
