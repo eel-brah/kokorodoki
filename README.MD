@@ -21,6 +21,7 @@ https://github.com/user-attachments/assets/103b6bd0-0010-4c3d-a373-cf4b218a05a0
   * [Requirements](#requirements)
   * [Setup Instructions](#setup-instructions)
 
+    * [Windows / Docker](#0-windows-or-docker)
     * [Dependencies](#1-dependencies)
     * [Install CUDA Toolkit](#2-install-cuda-toolkit)
     * [Installation](#3-installation)
@@ -86,7 +87,7 @@ https://github.com/user-attachments/assets/103b6bd0-0010-4c3d-a373-cf4b218a05a0
 | Spanish              | 3      |
 | French               | 1      |
 | Hindi                | 4      |
-| Italian              | 2      |-1
+| Italian              | 2      |
 | Brazilian Portuguese | 3      |
 | Japanese             | 5      |
 | Mandarin Chinese     | 8      |
@@ -108,7 +109,10 @@ Make sure you have the following installed (see below for a guide):
 
 ### Setup Instructions
 
+#### 0. Windows or Docker
+
 > For Windows instructions, see [windows.md](windows.md).
+> For Docker, see [docker.md](docker/DOCKER.MD).
 
 #### 1. Dependencies
 
