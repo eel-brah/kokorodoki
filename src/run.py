@@ -11,6 +11,7 @@ from config import (
     DEFAULT_VOICE,
     HOST,
     MAX_SPEED,
+    TIMEOUT,
     MIN_SPEED,
     PORT,
     PROMPT,
@@ -62,6 +63,7 @@ from utils import (
     split_text_to_sentences,
 )
 
+running_threads = 1
 
 def start(args: Args) -> None:
     """Initialize and run"""
@@ -364,10 +366,15 @@ def run_with_all(
             player.speak(sentences, console_mode=False)
     except KeyboardInterrupt:
         console.print("[bold yellow]Exiting...[/]")
-        if threading.active_count() > 1:
+        global running_threads
+        if threading.active_count() > running_threads:
             player.stop_playback(False)
-            while threading.active_count() > 1:
+            start_time = time.time()
+            while threading.active_count() > running_threads and (time.time() - start_time) < TIMEOUT:
                 time.sleep(0.1)
+            if threading.active_count() > running_threads:
+                console.print("[red]Warning: Threads still active after timeout, proceeding anyway.[/]")
+                running_threads += 1
         sys.exit()
 
 
@@ -391,10 +398,15 @@ def run_cli(
                 player.speak(sentences, console_mode=False)
         except KeyboardInterrupt:
             console.print("[bold yellow]Exiting...[/]")
-            if threading.active_count() > 1:
+            global running_threads
+            if threading.active_count() > running_threads:
                 player.stop_playback(False)
-                while threading.active_count() > 1:
+                start_time = time.time()
+                while threading.active_count() > running_threads and (time.time() - start_time) < TIMEOUT:
                     time.sleep(0.1)
+                if threading.active_count() > running_threads:
+                    console.print("[red]Warning: Threads still active after timeout, proceeding anyway.[/]")
+                    running_threads += 1
             sys.exit()
     else:
         player.generate_audio_file(sentences, output_file=output_file)
@@ -423,6 +435,7 @@ def run_console(
     console.print(f"  Language: [cyan]{get_language_map()[language]}[/]")
     console.print(f"  Voice: [cyan]{voice}[/]")
     console.print(f"  Speed: [cyan]{speed}[/]")
+    global running_threads
     while True:
         try:
             user_input = get_input(history_off, prompt)
@@ -492,10 +505,14 @@ def run_console(
 
                 elif cmd in ("!quit", "!q"):
                     console.print("[bold yellow]Exiting...[/]")
-                    if threading.active_count() > 1:
+                    if threading.active_count() > running_threads:
                         player.stop_playback(False)
-                        while threading.active_count() > 1:
+                        start_time = time.time()
+                        while threading.active_count() > running_threads and (time.time() - start_time) < TIMEOUT:
                             time.sleep(0.1)
+                        if threading.active_count() > running_threads:
+                            console.print("[red]Warning: Threads still active after timeout, proceeding anyway.[/]")
+                            running_threads += 1
                     break
 
                 elif cmd == "!clear":
@@ -523,10 +540,14 @@ def run_console(
                 continue
 
             # Stop if previous playback still running
-            if threading.active_count() > 1:
+            if threading.active_count() > running_threads:
                 player.stop_playback(False)
-                while threading.active_count() > 1:
+                start_time = time.time()
+                while threading.active_count() > running_threads and (time.time() - start_time) < TIMEOUT:
                     time.sleep(0.1)
+                if threading.active_count() > running_threads:
+                    console.print("[red]Warning: Threads still active after timeout, proceeding anyway.[/]")
+                    running_threads += 1
 
             sentences = split_text_to_sentences(user_input, player.nltk_language)
             with console.status(

@@ -10,6 +10,7 @@ REPO_ID = "hexgrad/Kokoro-82M"
 HISTORY_FILE = ".kokorodoki_history"
 HISTORY_LIMIT = 1024
 PROMPT = "> "
+TIMEOUT = 5
 
 COMMANDS = [
     "!lang",
@@ -32,7 +33,7 @@ COMMANDS = [
     "!ctrlc",
     "!status",
 ]
-HOST = "127.0.0.1"
+HOST = "0.0.0.0"
 PORT = 5561
 TITLE = "KokoroDoki"
 WINDOW_SIZE = "700x600"

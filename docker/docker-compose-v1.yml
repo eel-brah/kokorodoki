@@ -1,0 +1,54 @@
+x-kdoki-base: &kdoki-base
+  build:
+    context: .
+    dockerfile: Dockerfile
+  runtime: nvidia
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - capabilities: [gpu]
+  devices:
+    - /dev/snd:/dev/snd
+  volumes:
+    - /etc/asound.conf:/etc/asound.conf:ro
+    - /usr/share/alsa:/usr/share/alsa:ro
+    - ${XDG_RUNTIME_DIR}/pulse/native:${XDG_RUNTIME_DIR}/pulse/native
+  environment:
+    - PULSE_SERVER=unix:${XDG_RUNTIME_DIR}/pulse/native
+    - XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR}
+
+services:
+  kdoki:
+    <<: *kdoki-base
+    tty: true
+    stdin_open: true
+
+  kdoki_daemon:
+    <<: *kdoki-base
+    ports:
+      - "6155:5561"
+    command: ["--daemon"]
+
+  kdoki_gui:
+    <<: *kdoki-base
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}:${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}
+    environment:
+      - DISPLAY=${DISPLAY}
+      - WAYLAND_DISPLAY=${WAYLAND_DISPLAY}
+      - XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR}
+      - QT_QPA_PLATFORM=wayland
+      - GDK_BACKEND=wayland,x11
+    command: ["--gui"]
+
+  kdoki_gen:
+    <<: *kdoki-base
+    volumes:
+      - ./input:/input
+      - ./output:/output
+    command: ["-f", "/input/${INPUT_FILE}", "-o", "/output/${OUTPUT_FILE}"]
+    environment:
+      - INPUT_FILE=${INPUT_FILE}
+      - OUTPUT_FILE=${OUTPUT_FILE}
