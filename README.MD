@@ -112,7 +112,7 @@ Make sure you have the following installed (see below for a guide):
 #### 0. Windows or Docker
 
 > For Windows instructions, see [windows.md](windows.md).
-> For Docker, see [docker.md](docker/DOCKER.MD).
+> For Docker, see [docker.md](docker/DOCKER.md).
 
 #### 1. Dependencies
 
