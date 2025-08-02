@@ -170,8 +170,9 @@ chmod +x ~/.local/bin/doki
 
 ```bash
 # Integrate with systemd for better control (Daemon mode)
-mkdir -p ~/.config/systemd/user/
-cp ~/.local/bin/kdoki/kokorodoki.service ~/.config/systemd/user/
+chmod +x generate_kokorodoki_service.sh
+./generate_kokorodoki_service.sh
+
 systemctl --user daemon-reload
 systemctl --user enable kokorodoki.service
 systemctl --user start kokorodoki.service
