@@ -1,7 +1,7 @@
 x-kdoki-base: &kdoki-base
   build:
-    context: .
-    dockerfile: Dockerfile
+    context: ..
+    dockerfile:  docker/Dockerfile
   runtime: nvidia
   deploy:
     resources:
