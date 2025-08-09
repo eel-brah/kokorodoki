@@ -48,7 +48,7 @@ class TTSPlayer:
         self.back = threading.Event()
         self.lock = threading.Lock()
         self.back_number = 0
-        self.audio_player = AudioPlayer(SAMPLE_RATE)
+        self.audio_player = None
         self.ctrlc = not ctrlc
         self.print_complete = True
 
@@ -183,6 +183,8 @@ class TTSPlayer:
     def play_audio(self, gui_highlight=None) -> None:
         """Play audio chunks from the queue."""
         try:
+            if self.audio_player is None:
+                self.audio_player = AudioPlayer(SAMPLE_RATE)
             audio_chunks = []
             audio_size = 0
             self.back_number = 0

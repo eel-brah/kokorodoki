@@ -97,7 +97,9 @@ def start(args: Args) -> None:
 
         # audio_warmup()
 
-        if args.daemon:
+        if args.setup:
+            return
+        elif args.daemon:
             easyocr_lang = [
                 lang
                 for code, lang in get_easyocr_language_map().items()

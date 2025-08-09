@@ -13,17 +13,13 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /root/.local/bin
 
-RUN git clone https://github.com/eel-brah/kokorodoki kdoki
+COPY . kdoki
 
 WORKDIR /root/.venvs
 RUN python3.12 -m venv kdvenv
 RUN /bin/bash -c "source kdvenv/bin/activate && pip install --upgrade pip && pip install -r /root/.local/bin/kdoki/requirements.txt"
 
-RUN /root/.venvs/kdvenv/bin/python3.12 /root/.local/bin/kdoki/src/main.py --daemon
+RUN /root/.venvs/kdvenv/bin/python3.12 /root/.local/bin/kdoki/src/main.py --setup
 
-COPY ./entrypoint.sh /root/
-RUN chmod +x /root/entrypoint.sh
-
-ENTRYPOINT ["/root/entrypoint.sh"]
+ENTRYPOINT ["/root/.local/bin/kdoki/kokorodoki"]
 CMD []
-
