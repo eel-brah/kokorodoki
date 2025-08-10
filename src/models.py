@@ -19,7 +19,7 @@ from rich.progress import (
 )
 
 from config import MAX_SPEED, MIN_SPEED, REPO_ID, SAMPLE_RATE, console
-from utils import get_language_map, get_nltk_language, get_voices
+from utils import get_language_map, get_nltk_language, get_voices, parse_srt_file, split_text_to_sentences
 
 
 class TTSPlayer:
@@ -169,6 +169,95 @@ class TTSPlayer:
             sys.exit()
         except Exception as e:
             console.print(f"[bold red]Generation error:[/] {str(e)}")
+
+    def generate_srt_timed_audio(self, srt_file: str, output_file="Output.wav") -> None:
+        """Generate timed audio based on SRT subtitle file"""
+        try:
+            # Parse SRT file
+            srt_entries = parse_srt_file(srt_file)
+            if not srt_entries:
+                console.print("[bold red]Error:[/] No valid entries found in SRT file")
+                return
+
+            with Progress(
+                SpinnerColumn("dots", style="yellow", speed=0.8),
+                TextColumn("[bold yellow]{task.description}"),
+                BarColumn(pulse_style="yellow", complete_style="blue"),
+                TimeElapsedColumn(),
+            ) as progress:
+
+                task = progress.add_task(
+                    f"[bold yellow]Generating timed audio from SRT",
+                    total=len(srt_entries),
+                )
+
+                # Calculate total duration needed
+                total_duration = max(entry.end_time for entry in srt_entries)
+                total_samples = int(total_duration * SAMPLE_RATE)
+                
+                # Initialize stereo audio array with silence
+                full_audio = np.zeros((total_samples, 2))
+
+                for i, entry in enumerate(srt_entries):
+                    # Split text into sentences for better processing
+                    sentences = split_text_to_sentences(entry.text, self.nltk_language)
+                    
+                    # Generate audio for this entry
+                    entry_audio_chunks = []
+                    for sentence in sentences:
+                        generator = self.pipeline(
+                            sentence, voice=self.voice, speed=self.speed, split_pattern=None
+                        )
+
+                        for result in generator:
+                            if result.audio is not None:
+                                trimmed_audio, _ = librosa.effects.trim(
+                                    result.audio.numpy(), top_db=70
+                                )
+                                entry_audio_chunks.append(self.to_stereo(trimmed_audio))
+
+                    if entry_audio_chunks:
+                        # Concatenate all audio for this entry
+                        entry_audio = np.concatenate(entry_audio_chunks, axis=0)
+                        
+                        # Calculate timing
+                        start_sample = int(entry.start_time * SAMPLE_RATE)
+                        entry_duration = entry.end_time - entry.start_time
+                        target_samples = int(entry_duration * SAMPLE_RATE)
+                        
+                        # Ensure we don't exceed the target duration
+                        if len(entry_audio) > target_samples:
+                            # If audio is too long, truncate it
+                            entry_audio = entry_audio[:target_samples]
+                        
+                        # Calculate end sample
+                        end_sample = start_sample + len(entry_audio)
+                        
+                        # Make sure we don't exceed the total audio length
+                        if end_sample > len(full_audio):
+                            end_sample = len(full_audio)
+                            entry_audio = entry_audio[:end_sample - start_sample]
+                        
+                        # Place audio at the correct timing
+                        if start_sample < len(full_audio):
+                            full_audio[start_sample:end_sample] = entry_audio
+
+                    progress.update(task, advance=1)
+
+                # Save the final audio
+                sf.write(output_file, full_audio, SAMPLE_RATE, format="WAV")
+
+                progress.update(
+                    task,
+                    completed=len(srt_entries),
+                    description=f"[bold green]Saved timed audio to {output_file}[/]",
+                )
+
+        except KeyboardInterrupt:
+            console.print("\n[bold yellow]Exiting...[/]")
+            sys.exit()
+        except Exception as e:
+            console.print(f"[bold red]SRT generation error:[/] {str(e)}")
 
     def to_stereo(self, chunk):
         """Convert mono chunk to stereo"""

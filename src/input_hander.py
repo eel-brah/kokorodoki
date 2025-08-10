@@ -41,6 +41,7 @@ class Args:
     theme: int
     verbose: bool
     ctrl_c: bool
+    is_srt_file: bool
 
 
 def parse_args() -> Args:
@@ -141,7 +142,7 @@ def parse_args() -> Args:
         "-f",
         default=None,
         type=str,
-        help="Supply path to a text file",
+        help="Supply path to a text file or SRT subtitle file (SRT files detected automatically)",
     )
     parser.add_argument(
         "--output",
@@ -269,15 +270,33 @@ def parse_args() -> Args:
 
     # Handle input
     input_text = None
+    is_srt_file = False
     if args.file is not None:
         if not args.file.strip():
             console.print("[bold red]Error:[/] File path cannot be empty")
             sys.exit(1)
+            
+        # Check if it's an SRT file based on extension
+        is_srt_file = args.file.lower().endswith(('.srt', '.SRT'))
+        
+        # Validate SRT files can't be used with --all
+        if is_srt_file and args.all:
+            console.print("[bold red]Error:[/] --all cannot be used with SRT files")
+            sys.exit(1)
+        
         try:
+            # Validate file exists and is readable
             with open(args.file, "r", encoding="utf-8") as f:
-                input_text = f.read()
+                if is_srt_file:
+                    # Just validate SRT file is readable, don't load content
+                    f.read()
+                    input_text = args.file  # Store file path for SRT files
+                else:
+                    # Load content for text files
+                    input_text = f.read()
         except Exception as e:
-            console.print(f"[bold red]Error reading file:[/] {e}")
+            file_type = "SRT file" if is_srt_file else "file"
+            console.print(f"[bold red]Error reading {file_type}:[/] {e}")
             sys.exit(1)
     elif args.text is not None:
         if not args.text.strip():
@@ -301,6 +320,7 @@ def parse_args() -> Args:
         args.theme,
         args.verbose,
         args.ctrl_c_off,
+        is_srt_file,
     )
 
 

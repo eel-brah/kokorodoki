@@ -140,6 +140,16 @@ def start(args: Args) -> None:
             run_with_all(
                 pipeline, args.language, args.speed, args.verbose, args.input_text
             )
+        elif args.input_text and args.is_srt_file:
+            run_srt_cli(
+                pipeline,
+                args.language,
+                args.voice,
+                args.speed,
+                args.verbose,
+                args.input_text,  # This contains the SRT file path
+                args.output_file,
+            )
         elif args.input_text:
             run_cli(
                 pipeline,
@@ -412,6 +422,33 @@ def run_cli(
             sys.exit()
     else:
         player.generate_audio_file(sentences, output_file=output_file)
+
+
+def run_srt_cli(
+    pipeline: KPipeline,
+    language: str,
+    voice: str,
+    speed: float,
+    verbose: bool,
+    srt_file: str,
+    output_file: Optional[str],
+) -> None:
+    """Generate timed audio from SRT file"""
+    player = TTSPlayer(pipeline, language, voice, speed, verbose)
+    
+    if output_file is None:
+        output_file = "srt_output.wav"
+    
+    try:
+        console.print(f"[cyan]Processing SRT file:[/] {srt_file}")
+        player.generate_srt_timed_audio(srt_file, output_file=output_file)
+        console.print(f"[bold green]✓ Timed audio saved to:[/] {output_file}")
+    except KeyboardInterrupt:
+        console.print("[bold yellow]Exiting...[/]")
+        sys.exit()
+    except Exception as e:
+        console.print(f"[bold red]Error processing SRT file:[/] {str(e)}")
+        sys.exit(1)
 
 
 def run_console(

@@ -1,0 +1,19 @@
+1
+00:00:00,000 --> 00:00:03,000
+Hello and welcome to our demonstration.
+
+2
+00:00:04,000 --> 00:00:07,500
+This is how SRT subtitles work with timed audio generation.
+
+3
+00:00:08,500 --> 00:00:12,000
+Each subtitle entry will be spoken at the correct time.
+
+4
+00:00:13,000 --> 00:00:16,500
+Perfect for creating synchronized audio content.
+
+5
+00:00:17,500 --> 00:00:20,000
+Thank you for listening!

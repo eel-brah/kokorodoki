@@ -1,6 +1,8 @@
 import os
 import platform
 import re
+from dataclasses import dataclass
+from datetime import timedelta
 from typing import Dict, List, Optional
 
 if platform.system() == "Windows":
@@ -447,3 +449,64 @@ def split_text_to_sentences(text: str, language: str) -> List[str]:
 
     # new_sentences = merge_short_sentences(new_sentences, min_len=50, max_len=300)
     return new_sentences
+
+
+@dataclass
+class SRTEntry:
+    """Represents a single SRT subtitle entry"""
+    index: int
+    start_time: float  # in seconds
+    end_time: float    # in seconds
+    text: str
+
+
+def parse_srt_timestamp(timestamp: str) -> float:
+    """Parse SRT timestamp format (HH:MM:SS,mmm) to seconds"""
+    # Replace comma with dot for milliseconds
+    timestamp = timestamp.replace(',', '.')
+    parts = timestamp.split(':')
+    hours = int(parts[0])
+    minutes = int(parts[1])
+    seconds_ms = float(parts[2])
+    
+    return hours * 3600 + minutes * 60 + seconds_ms
+
+
+def parse_srt_file(file_path: str) -> List[SRTEntry]:
+    """Parse an SRT subtitle file and return a list of SRTEntry objects"""
+    entries = []
+    
+    with open(file_path, 'r', encoding='utf-8') as f:
+        content = f.read().strip()
+    
+    # Split by double newlines to separate entries
+    blocks = re.split(r'\n\s*\n', content)
+    
+    for block in blocks:
+        lines = block.strip().split('\n')
+        if len(lines) < 3:
+            continue
+            
+        try:
+            # Parse index
+            index = int(lines[0])
+            
+            # Parse timestamp line
+            timestamp_line = lines[1]
+            timestamp_match = re.match(r'(\d{2}:\d{2}:\d{2},\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2},\d{3})', timestamp_line)
+            if not timestamp_match:
+                continue
+                
+            start_time = parse_srt_timestamp(timestamp_match.group(1))
+            end_time = parse_srt_timestamp(timestamp_match.group(2))
+            
+            # Join text lines (in case subtitle spans multiple lines)
+            text = '\n'.join(lines[2:]).strip()
+            
+            entries.append(SRTEntry(index, start_time, end_time, text))
+            
+        except (ValueError, IndexError):
+            # Skip malformed entries
+            continue
+    
+    return entries
