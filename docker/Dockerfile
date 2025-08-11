@@ -21,5 +21,9 @@ RUN /bin/bash -c "source kdvenv/bin/activate && pip install --upgrade pip && pip
 
 RUN /root/.venvs/kdvenv/bin/python3.12 /root/.local/bin/kdoki/src/main.py --setup
 
-ENTRYPOINT ["/root/.local/bin/kdoki/kokorodoki"]
+COPY ./docker/entrypoint.sh /root/
+RUN chmod +x /root/entrypoint.sh
+
+ENTRYPOINT ["/root/entrypoint.sh"]
 CMD []
+

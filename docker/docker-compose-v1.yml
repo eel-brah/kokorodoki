@@ -52,3 +52,4 @@ services:
     environment:
       - INPUT_FILE=${INPUT_FILE}
       - OUTPUT_FILE=${OUTPUT_FILE}
+      - SKIP_STARTUP_MSG=1 
