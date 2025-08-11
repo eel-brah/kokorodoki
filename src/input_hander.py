@@ -34,6 +34,7 @@ class Args:
     input_text: Optional[str]
     output_file: Optional[str]
     all_voices: bool
+    setup: bool
     daemon: bool
     port: int
     gui: bool
@@ -148,6 +149,11 @@ def parse_args() -> Args:
         type=str,
         default=None,
         help="Output file path (only valid when --text or --file is used)",
+    )
+    parser.add_argument(
+        "--setup",
+        action="store_true",
+        help="Download the models and exit (useful for first-time setup)",
     )
     parser.add_argument(
         "--daemon",
@@ -288,6 +294,7 @@ def parse_args() -> Args:
         input_text,
         args.output,
         args.all,
+        args.setup,
         args.daemon,
         args.port,
         args.gui,
