@@ -57,6 +57,9 @@ https://github.com/user-attachments/assets/103b6bd0-0010-4c3d-a373-cf4b218a05a0
 * **📂 Export to WAV**
   Save generated audio for offline use or editing.
 
+* **🎬 SRT Subtitle Support**
+  Generate timed audio from SRT subtitle files with perfect synchronization.
+
 * **📟 Console Mode**
   An interactive terminal mode with commands to control playback, switch voices/languages, and more.
 
@@ -256,6 +259,9 @@ doki
 # Generate and save audio to a file
 kokorodoki -l b -v bf_lily -t "Generate audio file" -o output.wav
 
+# Generate timed audio from SRT subtitle file (auto-detected)
+kokorodoki -f subtitles.srt -o timed_audio.wav
+
 ```
 
 ### Command-Line Arguments
@@ -277,9 +283,9 @@ kokorodoki -l b -v bf_lily -t "Generate audio file" -o output.wav
 * `--gui`, `-g` Run in GUI mode.
 * `--daemon` Run in daemon mode.
 * `--text`, `-t` Supply a text string for CLI mode.
-* `--file`, `-f` Supply a text file for CLI mode.
+* `--file`, `-f` Supply a text file or SRT subtitle file (SRT files detected automatically).
 * `--output`, `-o` Specify output `.wav` file path.
-* `--all` Test all voices for the selected language (only with `--text` or `--file`).
+* `--all` Test all voices for the selected language (only with `--text` or text files).
 
 #### Other Options
 
@@ -454,8 +460,42 @@ Use the command-line interface for quick, one-off tasks:
 python src/main.py --text "Hello, world!"              
 # Speak text from a file and save the audio to a file
 python src/main.py --file input.txt --output out.wav   
+# Generate timed audio from SRT subtitle file (auto-detected)
+python src/main.py --file subtitles.srt --output timed_audio.wav
 # Speak using all available voices of a specific language
 python src/main.py -l a --text "All voices" --all      
+```
+
+#### 🎬 SRT Subtitle Support
+
+KokoroDoki now supports SRT subtitle files for generating timed audio. This feature allows you to:
+
+- **Perfect Timing**: Generate audio that matches subtitle timestamps exactly
+- **Professional Content**: Create synchronized voiceovers for videos
+- **Accessibility**: Convert subtitled content into audio format
+
+**SRT File Format Example:**
+```srt
+1
+00:00:00,000 --> 00:00:03,000
+Hello and welcome to our demonstration.
+
+2
+00:00:04,000 --> 00:00:07,500
+This is how SRT subtitles work with timed audio.
+
+3
+00:00:08,500 --> 00:00:12,000
+Each subtitle entry will be spoken at the correct time.
+```
+
+**Usage:**
+```bash
+# Generate timed audio from SRT file (auto-detected)
+kokorodoki -f subtitles.srt -o synchronized_audio.wav
+
+# With custom voice and language
+kokorodoki -f subtitles.srt -l a -v af_heart -o output.wav
 ```
 
 
