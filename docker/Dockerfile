@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     portaudio19-dev \
     espeak \
     libreadline-dev libncurses-dev pulseaudio-utils \
+    build-essential \
     git \
     && rm -rf /var/lib/apt/lists/*
 

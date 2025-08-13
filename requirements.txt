@@ -6,3 +6,13 @@ nltk==3.9.1
 librosa==0.11.0
 ttkbootstrap==1.12.0
 easyocr==1.7.2
+cn2an==0.5.23
+fugashi==1.5.1
+jaconv==0.4.0
+jieba==0.42.1
+mojimoji==0.0.13
+ordered-set==4.1.0
+proces==0.1.7
+pyopenjtalk==0.4.1
+pypinyin==0.55.0
+unidic-lite==1.0.8
