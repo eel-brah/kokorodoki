@@ -20,15 +20,20 @@ This guide walks you through setting up **Kokorodoki** on **Windows**.
 * Download the `.exe` installer from:
   [https://github.com/espeak-ng/espeak-ng/releases](https://github.com/espeak-ng/espeak-ng/releases)
 
+### 4. C++ Development Tools
+
+* Download: [Visual Studio Community](https://visualstudio.microsoft.com/vs/community/)
+* Run the Visual Studio Installer: The installer will open after download
+* In the "Workloads" tab: Check “Desktop development with C++”
+* Click “Install”
+
 
 ## GPU Acceleration (CUDA Support)
 
 If you have an NVIDIA GPU and want faster performance:
 
-1. Install the **CUDA Toolkit**:
-   [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads)
-
-2. **Optional but recommended**: Install **Visual Studio (Community Edition)** to ensure CUDA build tools are available.
+Install the **CUDA Toolkit**:
+[https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads)
 
 
 ## Installation
