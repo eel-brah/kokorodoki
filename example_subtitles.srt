@@ -3,35 +3,35 @@
 Welcome to KokoroDoki's new SRT subtitle feature!
 
 2
-00:00:05,000 --> 00:00:09,500
+00:00:05,000 --> 00:00:10,500
 This powerful enhancement allows you to generate
 perfectly timed audio from subtitle files.
 
 3
-00:00:10,500 --> 00:00:14,000
+00:00:12,500 --> 00:00:17,000
 Each subtitle entry is processed individually
 and placed at its exact timestamp.
 
 4
-00:00:15,000 --> 00:00:19,500
+00:00:18,000 --> 00:00:22,000
 You can now create synchronized voiceovers
 for videos, presentations, and more.
 
 5
-00:00:20,500 --> 00:00:24,000
+00:00:22,500 --> 00:00:27,000
 The generated audio maintains perfect timing
 with your original subtitles.
 
 6
-00:00:25,000 --> 00:00:28,500
+00:00:29,000 --> 00:00:33,500
 This opens up new possibilities for
 content creation and accessibility.
 
 7
-00:00:29,500 --> 00:00:33,000
+00:00:34,500 --> 00:00:38,500
 Try it out with your own SRT files
 and experience the synchronization!
 
 8
-00:00:34,000 --> 00:00:37,000
+00:00:39,000 --> 00:00:41,000
 Thank you for using KokoroDoki!
