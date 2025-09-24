@@ -81,6 +81,11 @@ https://github.com/user-attachments/assets/103b6bd0-0010-4c3d-a373-cf4b218a05a0
 > ⚠️ **Note:** While CPU mode is supported, performance is significantly better with CUDA-enabled GPUs. Without CUDA, real-time responsiveness and speed may be reduced.
 
 
+### Floating Tool Bar
+
+💡 Check out [floatingtoolbar](https://github.com/markd89/floatingtoolbar) by [markd89](https://github.com/markd89) — a Python/Qt GUI alternative to hotkeys for Daemon Mode.
+
+
 ## 🌐 Language & Voice Availability
 
 | Language             | Voices |
