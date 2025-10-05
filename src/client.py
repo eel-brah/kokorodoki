@@ -6,6 +6,7 @@ import subprocess
 import sys
 from enum import Enum
 from typing import Optional, Tuple
+import pyautogui
 
 if platform.system() == "Windows":
     import pyperclip
@@ -114,10 +115,14 @@ def get_clipboard() -> Optional[str | bytes]:
             return None
 
 
-def send_clipboard() -> None:
+def send_clipboard(perform_ctrl_c: bool) -> None:
     """Send clipboard content"""
+    if perform_ctrl_c:
+        try:
+            pyautogui.hotkey("ctrl", "c")
+        except KeyboardInterrupt:
+            pass
     clipboard_content = get_clipboard()
-
     if clipboard_content is not None:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
             client_socket.connect((HOST, PORT))
@@ -155,7 +160,9 @@ def send_voice(voice: str) -> None:
         client_socket.sendall(f"!voice {voice}".encode())
 
 
-def parse_args() -> Tuple[Action, Optional[float], Optional[str], Optional[str], bool]:
+def parse_args() -> (
+    Tuple[Action, Optional[float], Optional[str], Optional[str], bool, bool]
+):
     """Parse command-line arguments"""
     parser = argparse.ArgumentParser(
         description="Interact with kokorodoki daemon",
@@ -163,6 +170,12 @@ def parse_args() -> Tuple[Action, Optional[float], Optional[str], Optional[str],
 
     global PORT
 
+    parser.add_argument(
+        "--ctrl-c",
+        "-c",
+        action="store_true",
+        help="Perform Ctrl+C before reading clipboard",
+    )
     parser.add_argument(
         "--port", type=int, default=PORT, help=f"Choose a port number (default: {PORT})"
     )
@@ -278,13 +291,7 @@ def parse_args() -> Tuple[Action, Optional[float], Optional[str], Optional[str],
     )
 
     PORT = args.port
-    return (
-        action,
-        args.speed,
-        args.language,
-        args.voice,
-        args.status,
-    )
+    return (action, args.speed, args.language, args.voice, args.status, args.ctrl_c)
 
 
 def send(
@@ -293,6 +300,7 @@ def send(
     language: Optional[str],
     voice: Optional[str],
     status: bool,
+    perform_ctrl_c: bool,
 ) -> None:
     "Send commands or clipboard."
     if action in ACTION_COMMANDS:
@@ -300,7 +308,7 @@ def send(
         return
 
     if speed is None and voice is None and language is None and not status:
-        send_clipboard()
+        send_clipboard(perform_ctrl_c)
         return
 
     if language is not None:
@@ -315,7 +323,7 @@ def send(
 
 def main():
     """Main entry point."""
-    # action, speed, language, voice, status = parse_args()
+    # action, speed, language, voice, status, perform_ctrl_c = parse_args()
     send(*parse_args())
 
 
