@@ -196,6 +196,9 @@ doki
 # Send from clipboard
 ~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py
 
+# To trigger Ctrl+C before sending clipboard (No need to copy text manually)
+~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py -c
+
 # Stop playback 
 ~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py --stop
 
@@ -421,6 +424,7 @@ doki --resume
 
 # Config
 --port                  If you run kokorodoki daemon mode in a different port, use this option to specify it
+--ctrl-c                To trigger Ctrl+C before sending clipboard
 ```
 
 #### Recommended: Use with `systemd` for Better Control
