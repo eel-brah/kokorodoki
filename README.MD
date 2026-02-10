@@ -52,7 +52,7 @@ https://github.com/user-attachments/assets/103b6bd0-0010-4c3d-a373-cf4b218a05a0
   Pause, resume, skip, rewind, or change voice/language on the fly.
 
 * **🗌 Clipboard Monitoring (Daemon Mode)**
-  Automatically speak out any copied text.
+  Automatically speak out any copied/selected text.
 
 * **📂 Export to WAV**
   Save generated audio for offline use or editing.
@@ -193,10 +193,10 @@ doki
 
 # Create custom shortcuts for more convenience experience
 
-# Send from clipboard
+# Send the selected text
 ~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py
 
-# To trigger Ctrl+C before sending clipboard (No need to copy text manually)
+# Send text or an image from clipboard rather than selected text
 ~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py -c
 
 # Stop playback 
@@ -424,7 +424,7 @@ doki --resume
 
 # Config
 --port                  If you run kokorodoki daemon mode in a different port, use this option to specify it
---ctrl-c                To trigger Ctrl+C before sending clipboard
+--clipboard             Use clipboard text/image rather than selected text
 ```
 
 #### Recommended: Use with `systemd` for Better Control
@@ -438,8 +438,11 @@ To improve your experience, it's recommended to create custom keyboard shortcuts
 Below are some useful commands you can bind to shortcuts:
 
 ```bash
-# Send from clipboard
+# Send selected text 
 ~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py
+
+# Use clipboard text/image rather than selected text
+~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py -c
 
 # Stop playback 
 ~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py --stop

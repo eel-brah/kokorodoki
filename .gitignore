@@ -3,3 +3,4 @@ tests
 __pycache__
 req.txt
 custom_shortcut
+pdf.py

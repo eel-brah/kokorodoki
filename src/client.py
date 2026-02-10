@@ -6,7 +6,6 @@ import subprocess
 import sys
 from enum import Enum
 from typing import Optional, Tuple
-import pyautogui
 
 if platform.system() == "Windows":
     import pyperclip
@@ -44,8 +43,93 @@ ACTION_COMMANDS = {
 }
 
 
-def get_clipboard() -> Optional[str | bytes]:
-    """Get clipboard content, supporting Windows, X11, and Wayland"""
+def read_wayland_clipboard():
+    try:
+        types = subprocess.check_output(
+            ["wl-paste", "--list-types"], text=True
+        ).splitlines()
+
+        if "image/png" in types:
+            return subprocess.check_output(["wl-paste", "--type", "image/png"])
+
+        if any(t.startswith("text/plain") for t in types):
+            return subprocess.check_output(["wl-paste"], text=True)
+
+        return None
+
+    except subprocess.CalledProcessError as e:
+        print(f"Error reading clipboard: {e}")
+        return None
+    except FileNotFoundError:
+        print("Error: wl-paste is not installed. Please install wl-clipboard.")
+        return None
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
+
+
+def read_x11_clipboard():
+    try:
+        types = subprocess.check_output(
+            ["xclip", "-selection", "clipboard", "-t", "TARGETS", "-o"],
+            text=True,
+        ).splitlines()
+
+        if "image/png" in types:
+            return subprocess.check_output(
+                ["xclip", "-selection", "clipboard", "-t", "image/png", "-o"]
+            )
+
+        if "UTF8_STRING" in types or "STRING" in types:
+            return subprocess.check_output(
+                ["xclip", "-selection", "clipboard", "-o"], text=True
+            )
+
+        return None
+
+    except subprocess.CalledProcessError as e:
+        print(f"Error reading clipboard: {e}")
+        return None
+    except FileNotFoundError:
+        print("Error: xclip is not installed. Please install it first.")
+        return None
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
+
+
+def read_wayland_selection():
+    try:
+        return subprocess.check_output(["wl-paste", "--primary"], text=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error reading clipboard: {e}")
+        return None
+    except FileNotFoundError:
+        print("Error: wl-paste is not installed. Please install wl-clipboard.")
+        return None
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
+
+
+def read_x11_selection():
+    try:
+        return subprocess.check_output(
+            ["xclip", "-selection", "primary", "-out"], text=True
+        )
+    except subprocess.CalledProcessError as e:
+        print(f"Error reading clipboard: {e}")
+        return None
+    except FileNotFoundError:
+        print("Error: xclip is not installed. Please install it first.")
+        return None
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
+
+
+def get_text(clipboard: bool) -> Optional[str | bytes]:
+    """Get selected text or clipboard content"""
 
     if platform.system() == "Windows":
         # On Windows use pyperclip
@@ -58,78 +142,24 @@ def get_clipboard() -> Optional[str | bytes]:
     is_wayland = os.environ.get("WAYLAND_DISPLAY") is not None
 
     if is_wayland:
-        try:
-            try:
-                result = subprocess.run(
-                    ["wl-paste", "--no-newline"],
-                    capture_output=True,
-                    text=True,
-                    check=True,
-                )
-                return result.stdout
-            except UnicodeDecodeError:
-                result = subprocess.run(
-                    ["wl-paste", "--type", "image/png"],
-                    capture_output=True,
-                    check=True,
-                )
-                return result.stdout
-        except subprocess.CalledProcessError as e:
-            print(f"Error reading Wayland clipboard: {e}")
-            print(f"Command returned {e.returncode}")
-            print(f"Error output: {e.stderr}")
-            return None
-        except FileNotFoundError:
-            print("Error: wl-paste is not installed. Please install wl-clipboard.")
-            return None
-        except Exception as e:
-            print(f"Unexpected error on Wayland: {e}")
-            return None
+        if clipboard:
+            return read_wayland_clipboard()
+        return read_wayland_selection()
     else:
-        try:
-            try:
-                result = subprocess.run(
-                    ["xclip", "-selection", "clipboard", "-o"],
-                    capture_output=True,
-                    text=True,
-                    check=True,
-                )
-                return result.stdout.strip()
-            except subprocess.CalledProcessError:
-                result = subprocess.run(
-                    ["xclip", "-selection", "clipboard", "-t", "image/png", "-o"],
-                    capture_output=True,
-                    check=True,
-                )
-                return result.stdout
-        except subprocess.CalledProcessError as e:
-            print(f"Error reading X11 clipboard: {e}")
-            print(f"Command returned {e.returncode}")
-            print(f"Error output: {e.stderr}")
-            return None
-        except FileNotFoundError:
-            print("Error: xclip is not installed. Please install it first.")
-            return None
-        except Exception as e:
-            print(f"Unexpected error on X11: {e}")
-            return None
+        if clipboard:
+            return read_x11_clipboard()
+        return read_x11_selection()
 
-
-def send_clipboard(perform_ctrl_c: bool) -> None:
-    """Send clipboard content"""
-    if perform_ctrl_c:
-        try:
-            pyautogui.hotkey("ctrl", "c")
-        except KeyboardInterrupt:
-            pass
-    clipboard_content = get_clipboard()
-    if clipboard_content is not None:
+def send_text(clipboard: bool) -> None:
+    """Send selected text or clipboard content"""
+    content = get_text(clipboard)
+    if content is not None:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
             client_socket.connect((HOST, PORT))
-            if isinstance(clipboard_content, bytes):
-                client_socket.sendall(b"IMAGE:" + clipboard_content)
+            if isinstance(content, bytes):
+                client_socket.sendall(b"IMAGE:" + content)
             else:
-                client_socket.sendall(b"TEXT:" + clipboard_content.encode())
+                client_socket.sendall(b"TEXT:" + content.encode())
 
 
 def send_action(action: str) -> None:
@@ -171,10 +201,10 @@ def parse_args() -> (
     global PORT
 
     parser.add_argument(
-        "--ctrl-c",
+        "--clipboard",
         "-c",
         action="store_true",
-        help="Perform Ctrl+C before reading clipboard",
+        help="Get text and images from clipboard",
     )
     parser.add_argument(
         "--port", type=int, default=PORT, help=f"Choose a port number (default: {PORT})"
@@ -291,7 +321,7 @@ def parse_args() -> (
     )
 
     PORT = args.port
-    return (action, args.speed, args.language, args.voice, args.status, args.ctrl_c)
+    return (action, args.speed, args.language, args.voice, args.status, args.clipboard)
 
 
 def send(
@@ -300,7 +330,7 @@ def send(
     language: Optional[str],
     voice: Optional[str],
     status: bool,
-    perform_ctrl_c: bool,
+    clipboard: bool,
 ) -> None:
     "Send commands or clipboard."
     if action in ACTION_COMMANDS:
@@ -308,7 +338,7 @@ def send(
         return
 
     if speed is None and voice is None and language is None and not status:
-        send_clipboard(perform_ctrl_c)
+        send_text(clipboard)
         return
 
     if language is not None:
@@ -323,7 +353,6 @@ def send(
 
 def main():
     """Main entry point."""
-    # action, speed, language, voice, status, perform_ctrl_c = parse_args()
     send(*parse_args())
 
 
