@@ -6,6 +6,7 @@ readme = "README.MD"
 requires-python = ">=3.12"
 license = "GPL-3.0-only"
 dependencies = [
+    "pip",
     "kokoro>=0.9.2",
     "sounddevice>=0.5.1",
     "soundfile>=0.13.1",
