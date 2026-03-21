@@ -1,2 +1,2 @@
 #!/bin/bash
-~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py "$@"
+uv run doki "$@"

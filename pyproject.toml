@@ -1,0 +1,59 @@
+[project]
+name = "kokorodoki"
+version = "0.1.0"
+description = "A TTS application powered by Kokoro-82M"
+readme = "README.MD"
+requires-python = ">=3.12"
+license = "GPL-3.0-only"
+dependencies = [
+    "pip",
+    "kokoro>=0.9.2",
+    "sounddevice>=0.5.1",
+    "soundfile>=0.13.1",
+    "rich>=14.0.0",
+    "nltk>=3.9.3",
+    "librosa>=0.11.0",
+    "ttkbootstrap>=1.12.0",
+    "easyocr>=1.7.2",
+    "ordered-set>=4.1.0",
+    "proces>=0.1.7",
+    "PyAutoGUI>=0.9.54",
+]
+
+[project.optional-dependencies]
+japanese = [
+    "fugashi>=1.5.1",
+    "jaconv>=0.4.0",
+    "mojimoji>=0.0.13",
+    "pyopenjtalk>=0.4.1",
+    "unidic-lite>=1.0.8",
+]
+chinese = [
+    "cn2an>=0.5.23",
+    "jieba>=0.42.1",
+    "pypinyin>=0.55.0",
+]
+windows = [
+    "pyreadline3",
+    "pyperclip",
+]
+all = [
+    "kokorodoki[japanese,chinese]",
+]
+dev = [
+    "pytest",
+]
+
+[project.scripts]
+kokorodoki = "main:main"
+doki = "client:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+only-include = ["src"]
+
+[tool.hatch.build.targets.wheel.sources]
+"src" = ""

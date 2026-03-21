@@ -117,6 +117,15 @@ Make sure you have the following installed (see below for a guide):
 
 ### Setup Instructions
 
+
+#### Self-install
+
+Ensure you install python3.12 and [uv](https://docs.astral.sh/uv/#installation), then type:
+
+```
+uv tool install -p python3.12 https://github.com/fdev31/kokorodoki/archive/refs/heads/master.zip
+```
+
 #### 0. Windows or Docker
 
 > For Windows instructions, see [windows.md](windows.md).
