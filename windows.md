@@ -1,123 +1,183 @@
 # Kokorodoki – Windows Setup Guide
 
-This guide walks you through setting up **Kokorodoki** on **Windows**.
+This guide walks you through setting up **Kokorodoki** on **Windows** using **uv**.
 
 ---
 
 ## Prerequisites
 
-### 1. Install Python 3.12
+### 1. Install Python 3.12 and uv
 
-* Download: [https://www.python.org/downloads/release/python-3120/](https://www.python.org/downloads/release/python-3120/)
-* During installation, **make sure to check**: `Add Python to PATH`
-
-### 2. Install Git for Windows
-
-* Download: [https://git-scm.com/downloads](https://git-scm.com/downloads)
-
-### 3. Install eSpeak NG
-
-* Download the `.exe` installer from:
-  [https://github.com/espeak-ng/espeak-ng/releases](https://github.com/espeak-ng/espeak-ng/releases)
-
-### 4. C++ Development Tools
-
-* Download: [Visual Studio Community](https://visualstudio.microsoft.com/vs/community/)
-* Run the Visual Studio Installer: The installer will open after download
-* In the "Workloads" tab: Check “Desktop development with C++”
-* Click “Install”
-
-
-## GPU Acceleration (CUDA Support)
-
-If you have an NVIDIA GPU and want faster performance:
-
-Install the **CUDA Toolkit**:
-[https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads)
-
-
-## Installation
-
-You can use **PowerShell** or **Git Bash**. The steps below use **Git Bash**:
-
-```bash
-# Navigate to your home directory
-cd
-
-# Clone the repository
-git clone https://github.com/eel-brah/kokorodoki kdoki
-
-# Create and activate a virtual environment
-python -m venv kdvenv
-source kdvenv/Scripts/activate  # Use kdvenv\Scripts\activate.ps1 on PowerShell
-
-# Install dependencies
-pip install -r kdoki/requirements.txt
-pip install pyreadline3 pyperclip
-
-# Run the application
-python kdoki/src/main.py
-```
-
-> The first run may take some time as it downloads the AI model.
-
-### Running with CUDA
-
-If you installed CUDA but it using CPU by default, run:
-
-```bash
-python kdoki/src/main.py --device cuda
-```
-
-If it fails, see the troubleshooting section below.
-
-
-## Daemon Mode on Windows
-
-Since Windows doesn't support systemd, you can simulate daemon mode using a `.bat` file:
-
-```bat
-@echo off
-call path\to\kdvenv\Scripts\activate
-python path\to\kdoki\src\main.py --daemon
-```
-
-Then use **Task Scheduler**:
-
-* Create a scheduled task
-* Run the daemon script at login or bind it to a hotkey
+* Download Python 3.12: https://www.python.org/downloads/release/python-3120/
+* During installation, **enable**: `Add Python to PATH`
+* Install uv: https://docs.astral.sh/uv/#installation
 
 ---
 
-## Keyboard Shortcuts (with AutoHotkey)
+### 2. Install Git for Windows
 
-1. Install AutoHotkey: [https://www.autohotkey.com/](https://www.autohotkey.com/)
+* https://git-scm.com/downloads
 
-2. Create a script file (e.g., `kdoki.ahk`):
+---
 
-For example:
+### 3. Install eSpeak NG
 
-```ahk
-; Ctrl+Alt+A to send
-^!a::Run, C:\path\to\kdvenv\Scripts\python.exe C:\path\to\kdoki\src\client.py
+* Download installer:
+  https://github.com/espeak-ng/espeak-ng/releases
 
-; Ctrl+Alt+P to pause
-^!p::Run, C:\path\to\kdvenv\Scripts\python.exe C:\path\to\kdoki\src\client.py --pause
+---
 
-; Ctrl+Alt+R to resume
-^!r::Run, C:\path\to\kdvenv\Scripts\python.exe C:\path\to\kdoki\src\client.py --resume
+### 4. Install C++ Build Tools (Required)
 
-; Ctrl+Alt+S to stop
-^!s::Run, C:\path\to\kdvenv\Scripts\python.exe C:\path\to\kdoki\src\client.py --stop
+* https://visualstudio.microsoft.com/vs/community/
+* Select workload: **Desktop development with C++**
 
-; Ctrl+Alt+N for next
-^!n::Run, C:\path\to\kdvenv\Scripts\python.exe C:\path\to\kdoki\src\client.py --next
+---
 
-; Ctrl+Alt+B for previous
-^!b::Run, C:\path\to\kdvenv\Scripts\python.exe C:\path\to\kdoki\src\client.py --back
+## GPU Acceleration (Optional)
+
+If you have an NVIDIA GPU:
+
+* Install CUDA Toolkit:
+  https://developer.nvidia.com/cuda-downloads
+
+---
+
+##  Installation
+
+### Option 1 — Recommended (Global install)
+
+Install Kokorodoki globally:
+
+```bash
+uv tool install -p python3.12 https://github.com/eel-brah/kokorodoki/archive/refs/heads/master.zip
 ```
 
-3. Run the script to enable global hotkeys.
+#### With Japanese and Chinese support:
+
+```bash
+uv tool install -p python3.12 "https://github.com/eel-brah/kokorodoki/archive/refs/heads/master.zip[japanese,chinese]"
+```
+
+---
+
+### Option 2 — Manual install
+
+```bash
+git clone https://github.com/eel-brah/kokorodoki
+cd kokorodoki
+
+# Install dependencies
+uv sync
+
+# Run from project
+uv run kokorodoki
+```
+
+#### Optional: install locally as a tool
+
+```bash
+uv tool install .
+```
+
+Then you can run:
+
+```bash
+kokorodoki
+```
+
+---
+
+## Usage
+
+```bash
+# Run app
+kokorodoki
+
+# Help
+kokorodoki -h
+
+# GUI
+kokorodoki --gui
+
+# Daemon mode
+kokorodoki --daemon
+
+# Send clipboard text
+doki
+
+# Change voice
+doki -v af_sky
+```
+
+> Note:
+>
+> * If installed via `uv tool install`, use `kokorodoki` / `doki`
+> * If running from source, use `uv run kokorodoki` / `uv run doki`
+
+---
+
+## Running with CUDA
+
+```bash
+kokorodoki --device cuda
+```
+
+If CUDA is not detected, see troubleshooting below.
+
+---
+
+## Daemon Mode on Windows
+
+Windows does not support `systemd`, so use **Task Scheduler**.
+
+### 1. Create a startup script (optional)
+
+Create `run_kokorodoki.bat`:
+
+```bat
+@echo off
+kokorodoki --daemon
+```
+
+---
+
+### 2. Use Task Scheduler
+
+* Open **Task Scheduler**
+* Create a new task
+* Trigger: **At logon**
+* Action: Run the `.bat` file
+
+---
+
+## Keyboard Shortcuts (AutoHotkey)
+
+1. Install AutoHotkey: https://www.autohotkey.com/
+
+2. Create `kokorodoki.ahk`:
+
+```ahk
+; Send clipboard
+^!a::Run, doki
+
+; Pause
+^!p::Run, doki --pause
+
+; Resume
+^!r::Run, doki --resume
+
+; Stop
+^!s::Run, doki --stop
+
+; Next
+^!n::Run, doki --next
+
+; Back
+^!b::Run, doki --back
+```
+
+3. Run the script
 
 ---
 
@@ -135,14 +195,20 @@ print(torch.cuda.is_available())
 If CUDA is not available, reinstall PyTorch with GPU support:
 
 ```bash
-pip uninstall torch -y
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+uv pip uninstall torch -y
+uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 ```
 
-Then try running Kokorodoki with CUDA:
+---
 
-```bash
-python kdoki/src/main.py --device cuda
-```
+### Common Issues
+
+* `doki` not found → restart terminal after install
+* No audio → verify `espeak-ng` installed
+* CUDA not detected → reinstall correct PyTorch version
+
+---
+
+## ✅ Done
 
 You're all set! 🚀

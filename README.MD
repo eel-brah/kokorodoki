@@ -111,20 +111,11 @@ Make sure you have the following installed (see below for a guide):
 * **Python**: 3.12
 * **CUDA Toolkit**: [cuda-toolkit](https://developer.nvidia.com/cuda-toolkit)
 * **Audio & Voice Tools**: `portaudio`, `espeak`
-* **Build Tools**: `python3.12-dev`, `python3.12-virtualenv`
+* **Package Manager**: `uv`
 * **Python interface to the Tcl/Tk GUI toolkit**: `python3.12-tkinter`
 * **Clipboard Support (for Daemon Mode)**: `xclip` or `wl-clipboard` for Wayland
 
 ### Setup Instructions
-
-
-#### Self-install
-
-Ensure you install python3.12 and [uv](https://docs.astral.sh/uv/#installation), then type:
-
-```
-uv tool install -p python3.12 https://github.com/fdev31/kokorodoki/archive/refs/heads/master.zip
-```
 
 #### 0. Windows or Docker
 
@@ -137,7 +128,7 @@ uv tool install -p python3.12 https://github.com/fdev31/kokorodoki/archive/refs/
 
 ```bash
 sudo apt update && sudo apt install -y \
-  python3.12 python3.12-dev python3.12-venv python3.12-tk \
+  python3.12 python3.12-dev python3.12-tk \
   portaudio19-dev espeak wl-clipboard
 ```
 
@@ -145,50 +136,68 @@ sudo apt update && sudo apt install -y \
 
 ```bash
 sudo dnf install -y \
-  python3.12 python3.12-devel python3-virtualenv python3.12-tkinter \
+  python3.12 python3.12-devel python3.12-tkinter \
   portaudio espeak wl-clipboard
 ```
+
+Install `xclip` instead of `wl-clipboard` when using X11.
+
+Install uv: https://docs.astral.sh/uv/#installation
 
 #### 2. Install CUDA Toolkit
 
 Follow the official guide to install the [CUDA Toolkit](https://developer.nvidia.com/cuda-toolkit) compatible with your GPU and OS.
 
-
 #### 3. Installation
 
+##### Self-install
+
+Run directly with uv (no cloning required):
+
 ```bash
+uv tool install -p python3.12 https://github.com/eel-brah/kokorodoki/archive/refs/heads/master.zip
+```
 
-# Clone the repository
-cd ~/.local/bin
-git clone https://github.com/eel-brah/kokorodoki kdoki
+For japanese and Chinese support:
+```bash
+uv tool install -p python3.12 "https://github.com/eel-brah/kokorodoki/archive/refs/heads/master.zip[japanese,chinese]"
+```
 
-# Set up a virtual environment
-mkdir -p ~/.venvs
-cd ~/.venvs
-python3.12 -m venv kdvenv
-source kdvenv/bin/activate
+To remove it:
+```bash
+uv tool uninstall kokorodoki
+```
 
-# Install Python requirements
-pip install -r ~/.local/bin/kdoki/requirements.txt
+##### Manual install
 
-# Exit the virtual environment
-deactivate
+```bash
+git clone https://github.com/eel-brah/kokorodoki
+cd kokorodoki
 
-# Copy the wrapper
-cp ~/.local/bin/kdoki/kokorodoki ~/.local/bin
-chmod +x ~/.local/bin/kokorodoki
+# Create environment + install dependencies
+uv sync
 
-# Copy the wrapper for the client (Daemon mode)
-cp ~/.local/bin/kdoki/doki ~/.local/bin
-chmod +x ~/.local/bin/doki
+# To run it (inside project directory)
+uv run kokorodoki
+
+# Optional: install locally as a tool
+uv tool install .
+
+# Then run from anywhere
+kokorodoki 
+
+# For Japanese support:
+uv add ".[japanese]"
+
+# For Chinese:
+uv add ".[chinese]"
 ```
 
 #### 4. Integrate with systemd
 
 ```bash
 # Integrate with systemd for better control (Daemon mode)
-chmod +x generate_kokorodoki_service.sh
-./generate_kokorodoki_service.sh
+kokorodoki-install-service
 
 systemctl --user daemon-reload
 systemctl --user enable kokorodoki.service
@@ -200,38 +209,28 @@ systemctl --user status kokorodoki.service
 # Then run:
 doki
 
-# Create custom shortcuts for more convenience experience
+# Create custom keyboard shortcuts for more convenience experience
 
 # Send the selected text
-~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py
+doki
 
 # Send text or an image from clipboard rather than selected text
-~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py -c
+doki -c
 
 # Stop playback 
-~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py --stop
+doki --stop
 
 # Pause playback
-~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py --pause
+doki --pause
 
 # Resume playback
-~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py --resume
+doki --resume
 
 # Skip to next sentence
-~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py --next
+doki --next
 
 # Go back a sentence
-~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py --back
-```
-
-#### 5. Optional: Language Support Packages
-
-```bash
-# For Japanese
-pip install pyopenjtalk
-
-# For Mandarin Chinese
-pip install ordered_set pypinyin jieba cn2an
+doki --back
 ```
 
 
@@ -243,11 +242,11 @@ pip install ordered_set pypinyin jieba cn2an
 # Launch with default mode (Console mode) and default settings
 kokorodoki
 
-# The first run may take some time as it downloads the AI model.
+> Note:
+> - If installed via `uv tool install`, use `kokorodoki` / `doki`
+> - If running from source, use `uv run kokorodoki` / `uv run doki`
 
-# OR, if you didn't follow the setup steps above:
-# Use the path to your virtual environment and the path to where you cloned
-/path/to/venv/bin/python3.12 /path/to/kokorodoki/src/main.py
+# The first run may take some time as it downloads the AI model.
 
 # Show help
 kokorodoki -h
@@ -397,10 +396,6 @@ kokorodoki --daemon
 To send a text, copy the desired text and run `client.py` or `doki`
 
 ```bash
-~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py
-
-or
-
 doki
 ```
 
@@ -448,25 +443,25 @@ Below are some useful commands you can bind to shortcuts:
 
 ```bash
 # Send selected text 
-~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py
+doki
 
 # Use clipboard text/image rather than selected text
-~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py -c
+doki -c
 
 # Stop playback 
-~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py --stop
+doki --stop
 
 # Pause playback
-~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py --pause
+doki --pause
 
 # Resume playback
-~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py --resume
+doki --resume
 
 # Skip to next sentence
-~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py --next
+doki --next
 
 # Go back a sentence
-~/.venvs/kdvenv/bin/python3.12 ~/.local/bin/kdoki/src/client.py --back
+doki --back
 ```
 
 You can assign these to keyboard shortcuts using your desktop environment’s keyboard settings (e.g., GNOME → Settings → Keyboard → Custom Shortcuts).
@@ -478,13 +473,13 @@ Use the command-line interface for quick, one-off tasks:
 
 ```bash
 # Speak text
-python src/main.py --text "Hello, world!"              
+kokorodoki --text "Hello, world!"              
 # Speak text from a file and save the audio to a file
-python src/main.py --file input.txt --output out.wav   
+kokorodoki --file input.txt --output out.wav   
 # Generate timed audio from SRT subtitle file (auto-detected)
-python src/main.py --file subtitles.srt --output timed_audio.wav
+kokorodoki --file subtitles.srt --output timed_audio.wav
 # Speak using all available voices of a specific language
-python src/main.py -l a --text "All voices" --all      
+kokorodoki -l a --text "All voices" --all      
 ```
 
 #### 🎬 SRT Subtitle Support
