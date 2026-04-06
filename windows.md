@@ -50,7 +50,7 @@ If you have an NVIDIA GPU:
 Install Kokorodoki globally:
 
 ```bash
-uv tool install -p python3.12 https://github.com/eel-brah/kokorodoki/archive/refs/heads/master.zip
+uv tool install -p python3.12 "https://github.com/eel-brah/kokorodoki/archive/refs/heads/master.zip[windows]"
 ```
 
 #### With Japanese and Chinese support:
@@ -68,13 +68,13 @@ git clone https://github.com/eel-brah/kokorodoki
 cd kokorodoki
 
 # Install dependencies
-uv sync
+uv sync --extra windows
 
 # Run from project
 uv run kokorodoki
 ```
 
-#### Optional: install locally as a tool
+#### Option 3: install locally as a tool
 
 ```bash
 uv tool install .
@@ -94,6 +94,8 @@ kokorodoki
 # Run app
 kokorodoki
 
+# If running from source, use `uv run kokorodoki` / `uv run doki`
+
 # Help
 kokorodoki -h
 
@@ -109,11 +111,6 @@ doki
 # Change voice
 doki -v af_sky
 ```
-
-> Note:
->
-> * If installed via `uv tool install`, use `kokorodoki` / `doki`
-> * If running from source, use `uv run kokorodoki` / `uv run doki`
 
 ---
 
@@ -195,7 +192,7 @@ print(torch.cuda.is_available())
 If CUDA is not available, reinstall PyTorch with GPU support:
 
 ```bash
-uv pip uninstall torch -y
+uv pip uninstall torch
 uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 ```
 
@@ -203,7 +200,7 @@ uv pip install torch torchvision torchaudio --index-url https://download.pytorch
 
 ### Common Issues
 
-* `doki` not found → restart terminal after install
+* `kokorodoki` not found → restart terminal after install
 * No audio → verify `espeak-ng` installed
 * CUDA not detected → reinstall correct PyTorch version
 
