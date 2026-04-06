@@ -624,6 +624,8 @@ japanese = [
 windows = [
     { name = "pyperclip", marker = "sys_platform == 'win32'" },
     { name = "pyreadline3", marker = "sys_platform == 'win32'" },
+]
+windows-torch = [
     { name = "torch", version = "2.5.1+cu121", source = { registry = "https://download.pytorch.org/whl/cu121" }, marker = "sys_platform == 'win32'" },
     { name = "torchaudio", marker = "sys_platform == 'win32'" },
     { name = "torchvision", version = "0.20.1+cu121", source = { registry = "https://download.pytorch.org/whl/cu121" }, marker = "sys_platform == 'win32'" },
@@ -654,15 +656,15 @@ requires-dist = [
     { name = "soundfile", specifier = "==0.13.1" },
     { name = "torch", marker = "sys_platform != 'win32'", index = "https://pypi.org/simple" },
     { name = "torch", marker = "sys_platform == 'win32'", index = "https://download.pytorch.org/whl/cu121" },
-    { name = "torch", marker = "sys_platform == 'win32' and extra == 'windows'", index = "https://download.pytorch.org/whl/cu121" },
-    { name = "torchaudio", marker = "sys_platform == 'win32' and extra == 'windows'", index = "https://download.pytorch.org/whl/cu121" },
+    { name = "torch", marker = "sys_platform == 'win32' and extra == 'windows-torch'", index = "https://download.pytorch.org/whl/cu121" },
+    { name = "torchaudio", marker = "sys_platform == 'win32' and extra == 'windows-torch'", index = "https://download.pytorch.org/whl/cu121" },
     { name = "torchvision", marker = "sys_platform != 'win32'", index = "https://pypi.org/simple" },
     { name = "torchvision", marker = "sys_platform == 'win32'", index = "https://download.pytorch.org/whl/cu121" },
-    { name = "torchvision", marker = "sys_platform == 'win32' and extra == 'windows'", index = "https://download.pytorch.org/whl/cu121" },
+    { name = "torchvision", marker = "sys_platform == 'win32' and extra == 'windows-torch'", index = "https://download.pytorch.org/whl/cu121" },
     { name = "ttkbootstrap", specifier = "==1.12.0" },
     { name = "unidic-lite", marker = "extra == 'japanese'", specifier = "==1.0.8" },
 ]
-provides-extras = ["japanese", "chinese", "windows", "dev"]
+provides-extras = ["japanese", "chinese", "windows", "windows-torch", "dev"]
 
 [[package]]
 name = "language-tags"
@@ -2066,7 +2068,7 @@ dependencies = [
     { name = "typing-extensions", marker = "sys_platform == 'win32'" },
 ]
 wheels = [
-    { url = "https://download.pytorch.org/whl/cu121/torch-2.5.1%2Bcu121-cp312-cp312-win_amd64.whl", hash = "sha256:473d76257636c66b22cbfac6f616d6b522ef3d3473c13decb1afda22a7b059eb" },
+    { url = "https://download-r2.pytorch.org/whl/cu121/torch-2.5.1%2Bcu121-cp312-cp312-win_amd64.whl", hash = "sha256:473d76257636c66b22cbfac6f616d6b522ef3d3473c13decb1afda22a7b059eb" },
 ]
 
 [[package]]
