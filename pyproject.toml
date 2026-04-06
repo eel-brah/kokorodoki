@@ -18,6 +18,8 @@ dependencies = [
     "ordered-set==4.1.0",
     "proces==0.1.7",
     "PyAutoGUI==0.9.54",
+    "torch",
+    "torchvision"
 ]
 
 [project.optional-dependencies]
@@ -34,14 +36,37 @@ chinese = [
     "pypinyin==0.55.0",
 ]
 windows = [
-    "pyreadline3",
-    "pyperclip",
+    "pyreadline3; sys_platform == 'win32'",
+    "pyperclip; sys_platform == 'win32'",
+    "torch; sys_platform == 'win32'",
+    "torchvision; sys_platform == 'win32'",
+    "torchaudio; sys_platform == 'win32'",
 ]
-all = [
-    "kokorodoki[japanese,chinese]",
+dev = ["pytest"]
+
+
+
+[[tool.uv.index]]
+name = "pytorch-cu121"
+url = "https://download.pytorch.org/whl/cu121"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch"
+url = "https://pypi.org/simple"
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cu121", marker = "sys_platform == 'win32'" },
+    { index = "pytorch", marker = "sys_platform != 'win32'" },
 ]
-dev = [
-    "pytest",
+torchvision = [
+    { index = "pytorch-cu121", marker = "sys_platform == 'win32'" },
+    { index = "pytorch", marker = "sys_platform != 'win32'" },
+]
+torchaudio = [
+    { index = "pytorch-cu121", marker = "sys_platform == 'win32'" },
+    { index = "pytorch", marker = "sys_platform != 'win32'" },
 ]
 
 [project.scripts]
