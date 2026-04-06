@@ -40,12 +40,12 @@ windows = [
     "pyperclip; sys_platform == 'win32'",
 ]
 windows-torch = [
-    "torch; sys_platform == 'win32'",
-    "torchvision; sys_platform == 'win32'",
-    "torchaudio; sys_platform == 'win32'",
+    "kokorodoki[windows]",
+    "torch@https://download.pytorch.org/whl/cu121/torch-2.5.1%2Bcu121-cp312-cp312-win_amd64.whl ; sys_platform == 'win32'",
+    "torchvision@https://download.pytorch.org/whl/cu121/torchvision-0.20.1%2Bcu121-cp312-cp312-win_amd64.whl ; sys_platform == 'win32'",
+    "torchaudio@https://download.pytorch.org/whl/cu121/torchaudio-2.5.1%2Bcu121-cp312-cp312-win_amd64.whl ; sys_platform == 'win32'",
 ]
 dev = ["pytest"]
-
 
 
 [[tool.uv.index]]
@@ -79,6 +79,9 @@ kokorodoki-install-service = "install_service:install_service"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 only-include = ["src"]
