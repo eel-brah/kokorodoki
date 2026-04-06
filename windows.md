@@ -49,14 +49,20 @@ If you have an NVIDIA GPU:
 
 Install Kokorodoki globally:
 
+Without CUDA (CPU only):
 ```bash
 uv tool install -p python3.12 "https://github.com/eel-brah/kokorodoki/archive/refs/heads/master.zip[windows]"
+```
+
+With CUDA support:
+```bash
+uv tool install -p python3.12 "https://github.com/eel-brah/kokorodoki/archive/refs/heads/master.zip[windows-torch]"
 ```
 
 #### With Japanese and Chinese support:
 
 ```bash
-uv tool install -p python3.12 "https://github.com/eel-brah/kokorodoki/archive/refs/heads/master.zip[japanese,chinese]"
+uv tool install -p python3.12 "https://github.com/eel-brah/kokorodoki/archive/refs/heads/master.zip[windows,japanese,chinese]"
 ```
 
 ---
@@ -67,8 +73,11 @@ uv tool install -p python3.12 "https://github.com/eel-brah/kokorodoki/archive/re
 git clone https://github.com/eel-brah/kokorodoki
 cd kokorodoki
 
-# Install dependencies
+# CPU install
 uv sync --extra windows
+
+# GPU install (CUDA)
+uv sync --extra windows-torch
 
 # Run from project
 uv run kokorodoki
@@ -209,3 +218,15 @@ uv pip install torch torchvision torchaudio --index-url https://download.pytorch
 ## ✅ Done
 
 You're all set! 🚀
+
+## Uninstall / Cleanup
+If installed globally 
+````
+uv tool uninstall kokorodoki
+````
+
+If installed manually (cloned repo)
+Delete the project folder:
+````
+rm -rf kokorodoki
+````
